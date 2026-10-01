@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext } from "react";
+import React, { createContext, useState, useContext, useEffect } from "react";
 import * as XLSX from "xlsx";
 
 export const DataContext = createContext();
@@ -11,7 +11,6 @@ export const useData = () => {
   return context;
 };
 
-// DataProvider component that manages the state and logic for processing Excel files and providing the data to its children components.
 export function DataProvider({ children }) {
   const [rawData, setRawData] = useState(null);
   const [processedData, setProcessedData] = useState(null);
@@ -20,10 +19,46 @@ export function DataProvider({ children }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  /**
-   * Process an Excel file and extract its data into structured JSON format.
-   * @param {File} file - The Excel file to be processed.
-   */
+  const [reportHistory, setReportHistory] = useState([]);
+
+  useEffect(() => {
+    const savedHistory = localStorage.getItem("pdf_converter_history");
+    if (savedHistory) {
+      try {
+        setReportHistory(JSON.parse(savedHistory));
+      } catch (e) {
+        console.error("Error al cargar historial:", e);
+      }
+    }
+  }, []);
+
+  const saveToHistory = (reportMetadata) => {
+    const newEntry = {
+      id: Date.now(),
+      timestamp: new Date().toLocaleString(),
+      fileName: fileName || "Archivo Desconocido",
+      title: reportMetadata.title || "Reporte de Datos",
+      theme: reportMetadata.theme || "indigo",
+      rowCount: reportMetadata.rowCount || 0,
+      colCount: columns.length || 0,
+    };
+
+    const updated = [newEntry, ...reportHistory];
+    setReportHistory(updated);
+    localStorage.setItem("pdf_converter_history", JSON.stringify(updated));
+  };
+
+  const clearHistory = () => {
+    setReportHistory([]);
+    localStorage.removeItem("pdf_converter_history");
+  };
+
+  const deleteHistoryItem = (id) => {
+    const updated = reportHistory.filter((item) => item.id !== id);
+    setReportHistory(updated);
+    localStorage.setItem("pdf_converter_history", JSON.stringify(updated));
+  };
+
   const processFile = async (file) => {
     if (!file) return;
 
@@ -46,10 +81,8 @@ export function DataProvider({ children }) {
         try {
           const buffer = e.target.result;
           const workbook = XLSX.read(buffer, { type: "array" });
-
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
-
           const jsonArray = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
 
           if (!jsonArray || jsonArray.length === 0) {
@@ -68,10 +101,8 @@ export function DataProvider({ children }) {
           setColumns(detectedColumns);
           setIsLoading(false);
         } catch (err) {
-          console.error("Error al parsear la hoja Excel:", err);
-          setError(
-            "Ocurrió un error al procesar la estructura del archivo Excel.",
-          );
+          console.error("Error al parsear Excel:", err);
+          setError("Ocurrió un error al procesar el archivo Excel.");
           setIsLoading(false);
         }
       };
@@ -89,9 +120,6 @@ export function DataProvider({ children }) {
     }
   };
 
-  /**
-   * Reset the data state to its initial values, clearing any loaded data and errors.
-   */
   const resetData = () => {
     setRawData(null);
     setProcessedData(null);
@@ -110,6 +138,10 @@ export function DataProvider({ children }) {
     error,
     processFile,
     resetData,
+    reportHistory,
+    saveToHistory,
+    clearHistory,
+    deleteHistoryItem,
   };
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
