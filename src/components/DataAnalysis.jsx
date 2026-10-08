@@ -1,14 +1,21 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useData } from "../context/DataContext";
 import {
   BarChart3,
   Calculator,
-  TrendingUp,
-  Hash,
   PieChart as PieChartIcon,
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+} from "recharts";
 
 export default function DataAnalysis() {
   const { processedData, columns } = useData();
@@ -27,22 +34,21 @@ export default function DataAnalysis() {
     });
   }, [processedData, columns]);
 
-  const [selectedMetricCol, setSelectedMetricCol] = useState(
-    numericColumns[0] || "",
-  );
-  const [selectedXAxis, setSelectedXAxis] = useState(columns[0] || "");
-  const [selectedYAxis, setSelectedYAxis] = useState(numericColumns[0] || "");
-  const [chartType, setChartType] = useState("bar");
+  const [userMetricCol, setUserMetricCol] = useState("");
+  const selectedMetricCol =
+    userMetricCol && numericColumns.includes(userMetricCol)
+      ? userMetricCol
+      : numericColumns[0] || "";
 
-  React.useEffect(() => {
-    if (numericColumns.length > 0) {
-      if (!selectedMetricCol) setSelectedMetricCol(numericColumns[0]);
-      if (!selectedYAxis) setSelectedYAxis(numericColumns[0]);
-    }
-    if (columns.length > 0 && !selectedXAxis) {
-      setSelectedXAxis(columns[0]);
-    }
-  }, [numericColumns, columns]);
+  const [userXAxis, setUserXAxis] = useState("");
+  const selectedXAxis =
+    userXAxis && columns.includes(userXAxis) ? userXAxis : columns[0] || "";
+
+  const [userYAxis, setUserYAxis] = useState("");
+  const selectedYAxis =
+    userYAxis && numericColumns.includes(userYAxis)
+      ? userYAxis
+      : numericColumns[0] || "";
 
   const kpiStats = useMemo(() => {
     if (!processedData || !selectedMetricCol) {
@@ -85,8 +91,6 @@ export default function DataAnalysis() {
       .map(([name, value]) => ({ name, value }))
       .slice(0, 10);
   }, [processedData, selectedXAxis, selectedYAxis]);
-
-  const maxChartValue = Math.max(...chartData.map((d) => d.value), 1);
 
   if (!processedData || processedData.length === 0) return null;
 
@@ -131,7 +135,7 @@ export default function DataAnalysis() {
                   <span className="text-xs text-slate-500">Métrica:</span>
                   <select
                     value={selectedMetricCol}
-                    onChange={(e) => setSelectedMetricCol(e.target.value)}
+                    onChange={(e) => setUserMetricCol(e.target.value)}
                     className="px-2.5 py-1 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   >
                     {numericColumns.map((col) => (
@@ -201,7 +205,7 @@ export default function DataAnalysis() {
                   <span className="text-slate-500">Eje X:</span>
                   <select
                     value={selectedXAxis}
-                    onChange={(e) => setSelectedXAxis(e.target.value)}
+                    onChange={(e) => setUserXAxis(e.target.value)}
                     className="px-2 py-1 bg-white border border-slate-300 rounded focus:outline-none"
                   >
                     {columns.map((col) => (
@@ -217,7 +221,7 @@ export default function DataAnalysis() {
                     <span className="text-slate-500">Eje Y:</span>
                     <select
                       value={selectedYAxis}
-                      onChange={(e) => setSelectedYAxis(e.target.value)}
+                      onChange={(e) => setUserYAxis(e.target.value)}
                       className="px-2 py-1 bg-white border border-slate-300 rounded focus:outline-none"
                     >
                       {numericColumns.map((col) => (
@@ -232,32 +236,51 @@ export default function DataAnalysis() {
             </div>
 
             {chartData.length > 0 && numericColumns.length > 0 ? (
-              <div className="bg-slate-50 border border-slate-100 p-6 rounded-xl">
-                <div className="space-y-3">
-                  {chartData.map((item, idx) => {
-                    const percentage = Math.max(
-                      5,
-                      Math.round((item.value / maxChartValue) * 100),
-                    );
-                    return (
-                      <div key={idx} className="space-y-1">
-                        <div className="flex justify-between text-xs font-medium">
-                          <span className="text-slate-700 truncate max-w-[200px]">
-                            {item.name}
-                          </span>
-                          <span className="text-emerald-600 font-semibold">
-                            {item.value.toLocaleString()}
-                          </span>
-                        </div>
-                        <div className="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-emerald-600 rounded-full transition-all duration-500 ease-out"
-                            style={{ width: `${percentage}%` }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
+              <div className="bg-slate-50 border border-slate-100 p-4 rounded-xl">
+                <div className="w-full h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={chartData}
+                      margin={{ top: 10, right: 20, left: 10, bottom: 40 }}
+                    >
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke="#e2e8f0"
+                        vertical={false}
+                      />
+                      <XAxis
+                        dataKey="name"
+                        stroke="#64748b"
+                        fontSize={11}
+                        interval={0}
+                        angle={-25}
+                        textAnchor="end"
+                      />
+                      <YAxis
+                        stroke="#64748b"
+                        fontSize={11}
+                        tickFormatter={(v) =>
+                          v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v
+                        }
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#0f172a",
+                          color: "#fff",
+                          borderRadius: "8px",
+                          border: "none",
+                          fontSize: "12px",
+                        }}
+                        itemStyle={{ color: "#34d399" }}
+                      />
+                      <Bar
+                        dataKey="value"
+                        name={selectedYAxis}
+                        fill="#059669"
+                        radius={[4, 4, 0, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
               </div>
             ) : (
