@@ -1,4 +1,5 @@
-import React, { createContext, useState, useContext, useEffect } from "react";
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useState, useContext } from "react";
 import * as XLSX from "xlsx";
 
 export const DataContext = createContext();
@@ -19,18 +20,15 @@ export function DataProvider({ children }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const [reportHistory, setReportHistory] = useState([]);
-
-  useEffect(() => {
-    const savedHistory = localStorage.getItem("pdf_converter_history");
-    if (savedHistory) {
-      try {
-        setReportHistory(JSON.parse(savedHistory));
-      } catch (e) {
-        console.error("Error al cargar historial:", e);
-      }
+  const [reportHistory, setReportHistory] = useState(() => {
+    try {
+      const savedHistory = localStorage.getItem("pdf_converter_history");
+      return savedHistory ? JSON.parse(savedHistory) : [];
+    } catch (e) {
+      console.error("Error al cargar historial:", e);
+      return [];
     }
-  }, []);
+  });
 
   const saveToHistory = (reportMetadata) => {
     const newEntry = {
