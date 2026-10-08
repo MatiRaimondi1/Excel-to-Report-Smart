@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 
 export default function DataExplorer() {
-  const { rawData, processedData, setProcessedData, columns } = useData();
+  const { rawData, setProcessedData, columns } = useData();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
