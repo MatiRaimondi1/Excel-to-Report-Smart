@@ -52,8 +52,6 @@ export default function FileUpload() {
     if (files?.length > 0) {
       processFile(files[0]);
     }
-
-    e.target.value = "";
   };
 
   const handleKeyDown = (e) => {
@@ -123,6 +121,7 @@ export default function FileUpload() {
           type="file"
           accept=".xlsx,.xls"
           onChange={handleFileChange}
+          onClick={(e) => e.stopPropagation()}
           className="hidden"
           disabled={isLoading}
         />
