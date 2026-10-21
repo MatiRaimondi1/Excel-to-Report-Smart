@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useData } from "../context/DataContext";
 import {
   Search,
@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 
 export default function DataExplorer() {
-  const { rawData, setProcessedData, columns } = useData();
+  const { processedData, rawData, columns } = useData();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
@@ -22,9 +22,10 @@ export default function DataExplorer() {
   const [columnFilterValue, setColumnFilterValue] = useState("");
 
   const filteredData = useMemo(() => {
-    if (!rawData) return [];
+    const baseData = processedData || rawData;
+    if (!baseData) return [];
 
-    return rawData.filter((row) => {
+    return baseData.filter((row) => {
       const matchesSearch = Object.values(row).some((val) =>
         String(val ?? "")
           .toLowerCase()
@@ -39,7 +40,7 @@ export default function DataExplorer() {
 
       return matchesSearch && matchesColumn;
     });
-  }, [rawData, searchTerm, selectedColumnFilter, columnFilterValue]);
+  }, [processedData, rawData, searchTerm, selectedColumnFilter, columnFilterValue]);
 
   const sortedData = useMemo(() => {
     const dataToSort = [...filteredData];
@@ -64,10 +65,6 @@ export default function DataExplorer() {
       return 0;
     });
   }, [filteredData, sortConfig]);
-
-  React.useEffect(() => {
-    setProcessedData(sortedData);
-  }, [sortedData, setProcessedData]);
 
   const totalPages = Math.ceil(sortedData.length / itemsPerPage) || 1;
   const paginatedData = useMemo(() => {
