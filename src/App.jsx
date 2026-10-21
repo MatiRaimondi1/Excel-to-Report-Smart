@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { DataProvider, useData } from "./context/DataContext";
+import { useState, useContext } from "react";
+import { DataProvider, DataContext, useData } from "./context/DataContext";
 import FileUpload from "./components/FileUpload";
 import DataExplorer from "./components/DataExplorer";
 import DataQuality from "./components/DataQuality";
@@ -14,7 +14,7 @@ import {
   RotateCcwClock,
 } from "lucide-react";
 
-function MainContent() {
+export function MainContent() {
   const { rawData, fileName } = useData();
   const [activeTab, setActiveTab] = useState("create");
 
@@ -151,6 +151,11 @@ function MainContent() {
 }
 
 export default function App() {
+  const existingContext = useContext(DataContext);
+  if (existingContext) {
+    return <MainContent />;
+  }
+
   return (
     <DataProvider>
       <MainContent />
