@@ -11,9 +11,23 @@ import {
 
 export default function ReportHistory() {
   const { reportHistory, clearHistory, deleteHistoryItem } = useData();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
 
-  if (!reportHistory || reportHistory.length === 0) return null;
+  if (!reportHistory || reportHistory.length === 0) {
+    return (
+      <div className="w-full bg-white border border-slate-200 rounded-xl p-8 text-center shadow-sm mb-6">
+        <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 mb-3">
+          <History className="w-6 h-6" />
+        </div>
+        <h3 className="font-semibold text-slate-800 text-sm">
+          Historial de Reportes Generados
+        </h3>
+        <p className="text-xs text-slate-500 mt-1">
+          No hay reportes en el historial
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden mb-6 no-print">
