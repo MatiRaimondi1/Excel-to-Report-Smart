@@ -103,6 +103,8 @@ export default function DataQuality() {
     setProcessedData(rawData);
   };
 
+  if (!processedData || processedData.length === 0) return null;
+
   return (
     <div className="w-full bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden mb-6">
       {/* Header Desplegable */}
