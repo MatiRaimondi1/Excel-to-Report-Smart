@@ -171,10 +171,11 @@ export default function PdfReport() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
               <div>
-                <label className="block text-slate-600 font-medium mb-1">
+                <label htmlFor="report-title-input" className="block text-slate-600 font-medium mb-1">
                   Título del Reporte
                 </label>
                 <input
+                  id="report-title-input"
                   type="text"
                   value={reportTitle}
                   onChange={(e) => setReportTitle(e.target.value)}
@@ -183,10 +184,11 @@ export default function PdfReport() {
               </div>
 
               <div>
-                <label className="block text-slate-600 font-medium mb-1">
+                <label htmlFor="report-theme-select" className="block text-slate-600 font-medium mb-1">
                   Tema / Estilo Visual
                 </label>
                 <select
+                  id="report-theme-select"
                   value={templateTheme}
                   onChange={(e) => setTemplateTheme(e.target.value)}
                   className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"

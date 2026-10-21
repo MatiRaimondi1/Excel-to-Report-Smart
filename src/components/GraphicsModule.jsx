@@ -510,10 +510,11 @@ export default function GraphicsModule() {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 text-xs">
               {/* Eje X / Categoría */}
               <div>
-                <label className="block text-slate-600 font-medium mb-1 truncate">
+                <label htmlFor="chart-category-col" className="block text-slate-600 font-medium mb-1 truncate">
                   Eje X (Categoría):
                 </label>
                 <select
+                  id="chart-category-col"
                   value={categoryCol}
                   onChange={(e) => setUserCategoryCol(e.target.value)}
                   className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -528,10 +529,11 @@ export default function GraphicsModule() {
 
               {/* Métrica Principal */}
               <div>
-                <label className="block text-slate-600 font-medium mb-1 truncate">
+                <label htmlFor="chart-metric-col" className="block text-slate-600 font-medium mb-1 truncate">
                   Métrica Principal (Y):
                 </label>
                 <select
+                  id="chart-metric-col"
                   value={metricCol}
                   onChange={(e) => setUserMetricCol(e.target.value)}
                   disabled={aggregation === "count"}
@@ -551,10 +553,11 @@ export default function GraphicsModule() {
 
               {/* Función de Agregación */}
               <div>
-                <label className="block text-slate-600 font-medium mb-1 truncate">
+                <label htmlFor="chart-aggregation" className="block text-slate-600 font-medium mb-1 truncate">
                   Agregación:
                 </label>
                 <select
+                  id="chart-aggregation"
                   value={aggregation}
                   onChange={(e) => setRawAggregation(e.target.value)}
                   className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -569,10 +572,11 @@ export default function GraphicsModule() {
 
               {/* Segunda Métrica Comparativa (Opcional) */}
               <div>
-                <label className="block text-slate-600 font-medium mb-1 truncate">
+                <label htmlFor="chart-secondary-metric" className="block text-slate-600 font-medium mb-1 truncate">
                   Métrica 2 (Opcional):
                 </label>
                 <select
+                  id="chart-secondary-metric"
                   value={secondaryMetricCol}
                   onChange={(e) => setUserSecondaryMetricCol(e.target.value)}
                   disabled={
@@ -595,10 +599,11 @@ export default function GraphicsModule() {
 
               {/* Límite Top N */}
               <div>
-                <label className="block text-slate-600 font-medium mb-1 truncate">
+                <label htmlFor="chart-top-n" className="block text-slate-600 font-medium mb-1 truncate">
                   Mostrar (Top N):
                 </label>
                 <select
+                  id="chart-top-n"
                   value={limit}
                   onChange={(e) => setLimit(Number(e.target.value))}
                   className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -613,10 +618,11 @@ export default function GraphicsModule() {
 
               {/* Ordenamiento */}
               <div>
-                <label className="block text-slate-600 font-medium mb-1 truncate">
+                <label htmlFor="chart-sort-order" className="block text-slate-600 font-medium mb-1 truncate">
                   Orden de Datos:
                 </label>
                 <select
+                  id="chart-sort-order"
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
                   className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
