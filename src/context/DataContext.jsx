@@ -41,9 +41,11 @@ export function DataProvider({ children }) {
       colCount: columns.length || 0,
     };
 
-    const updated = [newEntry, ...reportHistory];
-    setReportHistory(updated);
-    localStorage.setItem("pdf_converter_history", JSON.stringify(updated));
+    setReportHistory((prev) => {
+      const updated = [newEntry, ...prev];
+      localStorage.setItem("pdf_converter_history", JSON.stringify(updated));
+      return updated;
+    });
   };
 
   const clearHistory = () => {
@@ -52,9 +54,11 @@ export function DataProvider({ children }) {
   };
 
   const deleteHistoryItem = (id) => {
-    const updated = reportHistory.filter((item) => item.id !== id);
-    setReportHistory(updated);
-    localStorage.setItem("pdf_converter_history", JSON.stringify(updated));
+    setReportHistory((prev) => {
+      const updated = prev.filter((item) => item.id !== id);
+      localStorage.setItem("pdf_converter_history", JSON.stringify(updated));
+      return updated;
+    });
   };
 
   const processFile = async (file) => {
