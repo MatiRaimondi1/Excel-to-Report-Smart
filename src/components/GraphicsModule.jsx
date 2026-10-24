@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef } from "react";
 import { useData } from "../context/DataContext";
+import { useTheme } from "../context/ThemeContext";
 import {
   BarChart3,
   LineChart as LineChartIcon,
@@ -77,81 +78,9 @@ const COLOR_PALETTES = {
   },
 };
 
-// Componente CustomTooltip declarado fuera de render para cumplir con React Hooks
-function CustomChartTooltip({
-  active,
-  payload,
-  label,
-  totalSum,
-  metricCol,
-  secondaryMetricCol,
-  activePalette,
-}) {
-  if (active && payload && payload.length) {
-    const dataItem = payload[0].payload;
-    const primaryVal = payload[0].value;
-    const percent =
-      totalSum > 0 ? ((primaryVal / totalSum) * 100).toFixed(1) : null;
-
-    return (
-      <div className="bg-slate-900/95 backdrop-blur-md text-white px-3.5 py-2.5 rounded-xl shadow-xl border border-slate-700/60 text-xs space-y-1 z-50">
-        <p className="font-semibold text-slate-100 max-w-[220px] truncate">
-          {dataItem.name || label}
-        </p>
-        <div className="flex items-center justify-between gap-4 pt-1 border-t border-slate-800">
-          <span className="text-slate-400 flex items-center gap-1.5">
-            <span
-              className="w-2 h-2 rounded-full inline-block"
-              style={{
-                backgroundColor: payload[0].color || activePalette.primary,
-              }}
-            />
-            {metricCol || "Conteo"}:
-          </span>
-          <span className="font-mono font-bold text-emerald-400">
-            {Number(primaryVal).toLocaleString(undefined, {
-              maximumFractionDigits: 2,
-            })}
-          </span>
-        </div>
-
-        {payload[1] && (
-          <div className="flex items-center justify-between gap-4">
-            <span className="text-slate-400 flex items-center gap-1.5">
-              <span
-                className="w-2 h-2 rounded-full inline-block"
-                style={{
-                  backgroundColor: payload[1].color || activePalette.secondary,
-                }}
-              />
-              {secondaryMetricCol}:
-            </span>
-            <span className="font-mono font-bold text-indigo-300">
-              {Number(payload[1].value).toLocaleString(undefined, {
-                maximumFractionDigits: 2,
-              })}
-            </span>
-          </div>
-        )}
-
-        {percent && (
-          <div className="text-[11px] text-slate-400 pt-0.5 flex justify-between">
-            <span>Proporción:</span>
-            <span className="text-slate-300 font-medium">{percent}%</span>
-          </div>
-        )}
-
-        <div className="text-[10px] text-slate-500 pt-0.5">
-          Filas agrupadas: {dataItem.itemsCount}
-        </div>
-      </div>
-    );
-  }
-  return null;
-}
-
 export default function GraphicsModule() {
   const { processedData, columns, fileName } = useData();
+  const { isDark } = useTheme();
   const [isOpen, setIsOpen] = useState(true);
   const chartContainerRef = useRef(null);
   const [isExporting, setIsExporting] = useState(false);
@@ -192,8 +121,8 @@ export default function GraphicsModule() {
   const [userSecondaryMetricCol, setUserSecondaryMetricCol] = useState("");
   const secondaryMetricCol =
     userSecondaryMetricCol &&
-    numericColumns.includes(userSecondaryMetricCol) &&
-    userSecondaryMetricCol !== metricCol
+      numericColumns.includes(userSecondaryMetricCol) &&
+      userSecondaryMetricCol !== metricCol
       ? userSecondaryMetricCol
       : "";
 
@@ -395,36 +324,26 @@ export default function GraphicsModule() {
     }
   };
 
-  const renderTooltip = (props) => (
-    <CustomChartTooltip
-      {...props}
-      totalSum={chartSummary.total}
-      metricCol={metricCol}
-      secondaryMetricCol={secondaryMetricCol}
-      activePalette={activePalette}
-    />
-  );
-
   if (!processedData || processedData.length === 0) return null;
 
   return (
-    <div className="w-full bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden mb-6">
+    <div className="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm overflow-hidden mb-6">
       {/* Header Desplegable */}
       <div
         onClick={() => setIsOpen(!isOpen)}
-        className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between cursor-pointer hover:bg-slate-100/80 transition-colors"
+        className="p-4 bg-slate-50 dark:bg-zinc-900/90 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between cursor-pointer hover:bg-slate-100/80 dark:hover:bg-zinc-800/80 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-emerald-100 text-emerald-700 rounded-lg">
+          <div className="p-2 bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-400 rounded-lg">
             <BarChart3 className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-slate-800 text-sm">
+              <h3 className="font-semibold text-slate-800 dark:text-zinc-100 text-sm">
                 Módulo de Gráficos Interactivos
               </h3>
             </div>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-zinc-400">
               Visualización dinámica, métricas comparativas y exportación de
               diagramas
             </p>
@@ -433,9 +352,9 @@ export default function GraphicsModule() {
 
         <div className="flex items-center gap-2">
           {isOpen ? (
-            <ChevronUp className="w-4 h-4 text-slate-400" />
+            <ChevronUp className="w-4 h-4 text-slate-400 dark:text-zinc-500" />
           ) : (
-            <ChevronDown className="w-4 h-4 text-slate-400" />
+            <ChevronDown className="w-4 h-4 text-slate-400 dark:text-zinc-500" />
           )}
         </div>
       </div>
@@ -443,12 +362,12 @@ export default function GraphicsModule() {
       {isOpen && (
         <div className="p-6 space-y-6">
           {/* Panel de Controles / Toolbar */}
-          <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-4">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-slate-200/70 pb-3">
+          <div className="p-4 bg-slate-50 dark:bg-zinc-950/70 border border-slate-200 dark:border-zinc-800 rounded-xl space-y-4">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-slate-200/70 dark:border-zinc-800 pb-3">
               {/* Selector de Tipo de Gráfico con Botones */}
               <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-xs font-semibold text-slate-500 mr-1 flex items-center gap-1">
-                  <Layers className="w-3.5 h-3.5 text-emerald-600" />
+                <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400 mr-1 flex items-center gap-1">
+                  <Layers className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                   Tipo:
                 </span>
                 {[
@@ -467,11 +386,10 @@ export default function GraphicsModule() {
                       key={type.id}
                       type="button"
                       onClick={() => setChartType(type.id)}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                        isActive
-                          ? "bg-emerald-600 text-white shadow-sm shadow-emerald-200 font-semibold"
-                          : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100 hover:text-slate-800"
-                      }`}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${isActive
+                        ? "bg-emerald-600 text-white shadow-sm shadow-emerald-200 dark:shadow-none font-semibold"
+                        : "bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 hover:bg-slate-100 dark:hover:bg-zinc-700 hover:text-slate-800 dark:hover:text-white"
+                        }`}
                     >
                       <Icon className="w-3.5 h-3.5" />
                       {type.label}
@@ -486,19 +404,19 @@ export default function GraphicsModule() {
                   type="button"
                   onClick={handleDownloadChart}
                   disabled={isExporting || aggregatedData.length === 0}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 hover:border-slate-300 disabled:opacity-50 transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-700 hover:border-slate-300 dark:hover:border-zinc-600 disabled:opacity-50 transition-colors"
                   title="Descargar este gráfico en formato de imagen PNG de alta calidad"
                 >
                   {copiedSuccess ? (
                     <>
-                      <Check className="w-3.5 h-3.5 text-emerald-600" />
-                      <span className="text-emerald-600 font-semibold">
+                      <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                      <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
                         ¡Descargado!
                       </span>
                     </>
                   ) : (
                     <>
-                      <Download className="w-3.5 h-3.5 text-slate-500" />
+                      <Download className="w-3.5 h-3.5 text-slate-500 dark:text-zinc-400" />
                       <span>Exportar PNG</span>
                     </>
                   )}
@@ -510,14 +428,14 @@ export default function GraphicsModule() {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 text-xs">
               {/* Eje X / Categoría */}
               <div>
-                <label htmlFor="chart-category-col" className="block text-slate-600 font-medium mb-1 truncate">
+                <label htmlFor="chart-category-col" className="block text-slate-600 dark:text-zinc-300 font-medium mb-1 truncate">
                   Eje X (Categoría):
                 </label>
                 <select
                   id="chart-category-col"
                   value={categoryCol}
                   onChange={(e) => setUserCategoryCol(e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full px-2.5 py-1.5 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 text-slate-800 dark:text-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 >
                   {columns.map((col) => (
                     <option key={col} value={col}>
@@ -529,7 +447,7 @@ export default function GraphicsModule() {
 
               {/* Métrica Principal */}
               <div>
-                <label htmlFor="chart-metric-col" className="block text-slate-600 font-medium mb-1 truncate">
+                <label htmlFor="chart-metric-col" className="block text-slate-600 dark:text-zinc-300 font-medium mb-1 truncate">
                   Métrica Principal (Y):
                 </label>
                 <select
@@ -537,7 +455,7 @@ export default function GraphicsModule() {
                   value={metricCol}
                   onChange={(e) => setUserMetricCol(e.target.value)}
                   disabled={aggregation === "count"}
-                  className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-100 disabled:text-slate-400"
+                  className="w-full px-2.5 py-1.5 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 text-slate-800 dark:text-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-100 dark:disabled:bg-zinc-850 disabled:text-slate-400 dark:disabled:text-zinc-600"
                 >
                   {numericColumns.length > 0 ? (
                     numericColumns.map((col) => (
@@ -553,14 +471,14 @@ export default function GraphicsModule() {
 
               {/* Función de Agregación */}
               <div>
-                <label htmlFor="chart-aggregation" className="block text-slate-600 font-medium mb-1 truncate">
+                <label htmlFor="chart-aggregation" className="block text-slate-600 dark:text-zinc-300 font-medium mb-1 truncate">
                   Agregación:
                 </label>
                 <select
                   id="chart-aggregation"
                   value={aggregation}
                   onChange={(e) => setRawAggregation(e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full px-2.5 py-1.5 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 text-slate-800 dark:text-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 >
                   <option value="sum">Suma total</option>
                   <option value="avg">Promedio</option>
@@ -572,7 +490,7 @@ export default function GraphicsModule() {
 
               {/* Segunda Métrica Comparativa (Opcional) */}
               <div>
-                <label htmlFor="chart-secondary-metric" className="block text-slate-600 font-medium mb-1 truncate">
+                <label htmlFor="chart-secondary-metric" className="block text-slate-600 dark:text-zinc-300 font-medium mb-1 truncate">
                   Métrica 2 (Opcional):
                 </label>
                 <select
@@ -584,7 +502,7 @@ export default function GraphicsModule() {
                     chartType === "pie" ||
                     chartType === "donut"
                   }
-                  className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-100 disabled:text-slate-400"
+                  className="w-full px-2.5 py-1.5 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 text-slate-800 dark:text-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-100 dark:disabled:bg-zinc-850 disabled:text-slate-400 dark:disabled:text-zinc-600"
                 >
                   <option value="">(Ninguna)</option>
                   {numericColumns
@@ -599,14 +517,14 @@ export default function GraphicsModule() {
 
               {/* Límite Top N */}
               <div>
-                <label htmlFor="chart-top-n" className="block text-slate-600 font-medium mb-1 truncate">
+                <label htmlFor="chart-top-n" className="block text-slate-600 dark:text-zinc-300 font-medium mb-1 truncate">
                   Mostrar (Top N):
                 </label>
                 <select
                   id="chart-top-n"
                   value={limit}
                   onChange={(e) => setLimit(Number(e.target.value))}
-                  className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full px-2.5 py-1.5 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 text-slate-800 dark:text-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 >
                   <option value={5}>Top 5 elementos</option>
                   <option value={10}>Top 10 elementos</option>
@@ -618,14 +536,14 @@ export default function GraphicsModule() {
 
               {/* Ordenamiento */}
               <div>
-                <label htmlFor="chart-sort-order" className="block text-slate-600 font-medium mb-1 truncate">
+                <label htmlFor="chart-sort-order" className="block text-slate-600 dark:text-zinc-300 font-medium mb-1 truncate">
                   Orden de Datos:
                 </label>
                 <select
                   id="chart-sort-order"
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full px-2.5 py-1.5 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 text-slate-800 dark:text-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 >
                   <option value="desc">Mayor a menor</option>
                   <option value="asc">Menor a mayor</option>
@@ -635,10 +553,10 @@ export default function GraphicsModule() {
             </div>
 
             {/* Ajustes visuales: Paleta y Toggles */}
-            <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-slate-200/70 text-xs">
+            <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-slate-200/70 dark:border-zinc-800 text-xs">
               <div className="flex items-center gap-3">
-                <span className="text-slate-500 font-medium flex items-center gap-1">
-                  <Palette className="w-3.5 h-3.5 text-slate-400" />
+                <span className="text-slate-500 dark:text-zinc-400 font-medium flex items-center gap-1">
+                  <Palette className="w-3.5 h-3.5 text-slate-400 dark:text-zinc-500" />
                   Paleta de color:
                 </span>
                 <div className="flex items-center gap-1.5">
@@ -648,11 +566,10 @@ export default function GraphicsModule() {
                       type="button"
                       onClick={() => setSelectedPalette(key)}
                       title={pal.name}
-                      className={`h-6 px-2 rounded-md flex items-center gap-1.5 transition-all text-[11px] ${
-                        selectedPalette === key
-                          ? "bg-white border-2 border-slate-800 font-semibold shadow-xs"
-                          : "bg-white/80 border border-slate-200 hover:border-slate-300 text-slate-600"
-                      }`}
+                      className={`h-6 px-2 rounded-md flex items-center gap-1.5 transition-all text-[11px] ${selectedPalette === key
+                        ? "bg-white dark:bg-zinc-800 border-2 border-slate-800 dark:border-zinc-200 text-slate-900 dark:text-zinc-100 font-semibold shadow-xs"
+                        : "bg-white/80 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 hover:border-slate-300 dark:hover:border-zinc-600 text-slate-600 dark:text-zinc-400"
+                        }`}
                     >
                       <span
                         className="w-2.5 h-2.5 rounded-full inline-block shrink-0"
@@ -664,13 +581,13 @@ export default function GraphicsModule() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 text-slate-600">
+              <div className="flex items-center gap-4 text-slate-600 dark:text-zinc-300">
                 <label className="flex items-center gap-1.5 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={showGrid}
                     onChange={(e) => setShowGrid(e.target.checked)}
-                    className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                    className="rounded border-slate-300 dark:border-zinc-700 text-emerald-600 focus:ring-emerald-500"
                   />
                   <span>Cuadrícula</span>
                 </label>
@@ -680,7 +597,7 @@ export default function GraphicsModule() {
                     type="checkbox"
                     checked={showLegend}
                     onChange={(e) => setShowLegend(e.target.checked)}
-                    className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                    className="rounded border-slate-300 dark:border-zinc-700 text-emerald-600 focus:ring-emerald-500"
                   />
                   <span>Leyenda</span>
                 </label>
@@ -690,49 +607,49 @@ export default function GraphicsModule() {
 
           {/* Tarjetas KPI de Resumen del Gráfico */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-            <div className="p-3.5 bg-slate-50/80 border border-slate-200/70 rounded-xl">
-              <span className="text-slate-500 font-medium block mb-1">
+            <div className="p-3.5 bg-slate-50/80 dark:bg-zinc-950/60 border border-slate-200/70 dark:border-zinc-800 rounded-xl">
+              <span className="text-slate-500 dark:text-zinc-400 font-medium block mb-1">
                 Total Agregado ({aggregation === "count" ? "Filas" : metricCol || "Métrica"})
               </span>
-              <span className="text-lg font-bold text-slate-800">
+              <span className="text-lg font-bold text-slate-800 dark:text-zinc-100">
                 {chartSummary.total.toLocaleString(undefined, {
                   maximumFractionDigits: 2,
                 })}
               </span>
             </div>
 
-            <div className="p-3.5 bg-slate-50/80 border border-slate-200/70 rounded-xl">
-              <span className="text-slate-500 font-medium block mb-1">
+            <div className="p-3.5 bg-slate-50/80 dark:bg-zinc-950/60 border border-slate-200/70 dark:border-zinc-800 rounded-xl">
+              <span className="text-slate-500 dark:text-zinc-400 font-medium block mb-1">
                 Promedio por Categoría
               </span>
-              <span className="text-lg font-bold text-slate-800">
+              <span className="text-lg font-bold text-slate-800 dark:text-zinc-100">
                 {chartSummary.avg.toLocaleString(undefined, {
                   maximumFractionDigits: 2,
                 })}
               </span>
             </div>
 
-            <div className="p-3.5 bg-emerald-50/70 border border-emerald-100 rounded-xl">
-              <span className="text-emerald-700 font-medium block mb-1 truncate">
+            <div className="p-3.5 bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/50 rounded-xl">
+              <span className="text-emerald-700 dark:text-emerald-400 font-medium block mb-1 truncate">
                 Líder: {chartSummary.topCategory}
               </span>
               <div className="flex items-baseline gap-2">
-                <span className="text-lg font-bold text-emerald-900">
+                <span className="text-lg font-bold text-emerald-900 dark:text-emerald-200">
                   {chartSummary.topValue.toLocaleString(undefined, {
                     maximumFractionDigits: 2,
                   })}
                 </span>
-                <span className="text-[11px] font-semibold text-emerald-600">
+                <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
                   ({chartSummary.topPercent}%)
                 </span>
               </div>
             </div>
 
-            <div className="p-3.5 bg-slate-50/80 border border-slate-200/70 rounded-xl">
-              <span className="text-slate-500 font-medium block mb-1">
+            <div className="p-3.5 bg-slate-50/80 dark:bg-zinc-950/60 border border-slate-200/70 dark:border-zinc-800 rounded-xl">
+              <span className="text-slate-500 dark:text-zinc-400 font-medium block mb-1">
                 Categorías Graficadas
               </span>
-              <span className="text-lg font-bold text-slate-800">
+              <span className="text-lg font-bold text-slate-800 dark:text-zinc-100">
                 {chartSummary.count}
               </span>
             </div>
@@ -741,8 +658,9 @@ export default function GraphicsModule() {
           {/* Área de Visualización Gráfica Recharts */}
           <div
             ref={chartContainerRef}
-            className="w-full bg-slate-50/40 border border-slate-200/80 rounded-xl p-4 sm:p-6"
+            className="w-full bg-slate-50/40 dark:bg-zinc-950/60 border border-slate-200/80 dark:border-zinc-800 rounded-xl p-4 sm:p-6"
           >
+
             {aggregatedData.length > 0 ? (
               <div className="w-full h-[400px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -755,13 +673,13 @@ export default function GraphicsModule() {
                       {showGrid && (
                         <CartesianGrid
                           strokeDasharray="3 3"
-                          stroke="#e2e8f0"
+                          stroke={isDark ? "#27272a" : "#e2e8f0"}
                           vertical={false}
                         />
                       )}
                       <XAxis
                         dataKey="displayName"
-                        stroke="#64748b"
+                        stroke={isDark ? "#a1a1aa" : "#64748b"}
                         fontSize={11}
                         interval={0}
                         angle={-25}
@@ -769,13 +687,21 @@ export default function GraphicsModule() {
                         tickMargin={10}
                       />
                       <YAxis
-                        stroke="#64748b"
+                        stroke={isDark ? "#a1a1aa" : "#64748b"}
                         fontSize={11}
                         tickFormatter={(v) =>
                           v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v
                         }
                       />
-                      <Tooltip content={renderTooltip} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: isDark ? "#27272a" : "#fff",
+                          color: isDark ? "#fff" : "#000",
+                          borderRadius: "8px",
+                          border: isDark ? "1px solid #27272a" : "1px solid #e2e8f0",
+                          fontSize: "12px",
+                        }}
+                        cursor={{ fill: isDark ? "#27272a" : "#e2e8f0" }} />
                       {showLegend && <Legend verticalAlign="top" height={36} />}
                       <Bar
                         dataKey="value"
@@ -790,7 +716,7 @@ export default function GraphicsModule() {
                               key={`cell-${index}`}
                               fill={
                                 activePalette.colors[
-                                  index % activePalette.colors.length
+                                index % activePalette.colors.length
                                 ]
                               }
                             />
@@ -817,13 +743,13 @@ export default function GraphicsModule() {
                       {showGrid && (
                         <CartesianGrid
                           strokeDasharray="3 3"
-                          stroke="#e2e8f0"
+                          stroke={isDark ? "#27272a" : "#e2e8f0"}
                           horizontal={false}
                         />
                       )}
                       <XAxis
                         type="number"
-                        stroke="#64748b"
+                        stroke={isDark ? "#a1a1aa" : "#64748b"}
                         fontSize={11}
                         tickFormatter={(v) =>
                           v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v
@@ -832,11 +758,19 @@ export default function GraphicsModule() {
                       <YAxis
                         dataKey="displayName"
                         type="category"
-                        stroke="#64748b"
+                        stroke={isDark ? "#a1a1aa" : "#64748b"}
                         fontSize={11}
                         width={90}
                       />
-                      <Tooltip content={renderTooltip} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: isDark ? "#27272a" : "#fff",
+                          color: isDark ? "#fff" : "#000",
+                          borderRadius: "8px",
+                          border: isDark ? "1px solid #27272a" : "1px solid #e2e8f0",
+                          fontSize: "12px",
+                        }}
+                        cursor={{ fill: isDark ? "#27272a" : "#e2e8f0" }} />
                       {showLegend && <Legend verticalAlign="top" height={36} />}
                       <Bar
                         dataKey="value"
@@ -851,7 +785,7 @@ export default function GraphicsModule() {
                               key={`cell-${index}`}
                               fill={
                                 activePalette.colors[
-                                  index % activePalette.colors.length
+                                index % activePalette.colors.length
                                 ]
                               }
                             />
@@ -877,13 +811,13 @@ export default function GraphicsModule() {
                       {showGrid && (
                         <CartesianGrid
                           strokeDasharray="3 3"
-                          stroke="#e2e8f0"
+                          stroke={isDark ? "#27272a" : "#e2e8f0"}
                           vertical={false}
                         />
                       )}
                       <XAxis
                         dataKey="displayName"
-                        stroke="#64748b"
+                        stroke={isDark ? "#a1a1aa" : "#64748b"}
                         fontSize={11}
                         interval={0}
                         angle={-25}
@@ -891,13 +825,21 @@ export default function GraphicsModule() {
                         tickMargin={10}
                       />
                       <YAxis
-                        stroke="#64748b"
+                        stroke={isDark ? "#a1a1aa" : "#64748b"}
                         fontSize={11}
                         tickFormatter={(v) =>
                           v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v
                         }
                       />
-                      <Tooltip content={renderTooltip} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: isDark ? "#27272a" : "#fff",
+                          color: isDark ? "#fff" : "#000",
+                          borderRadius: "8px",
+                          border: isDark ? "1px solid #27272a" : "1px solid #e2e8f0",
+                          fontSize: "12px",
+                        }}
+                      />
                       {showLegend && <Legend verticalAlign="top" height={36} />}
                       <Line
                         type="monotone"
@@ -952,13 +894,13 @@ export default function GraphicsModule() {
                       {showGrid && (
                         <CartesianGrid
                           strokeDasharray="3 3"
-                          stroke="#e2e8f0"
+                          stroke={isDark ? "#27272a" : "#e2e8f0"}
                           vertical={false}
                         />
                       )}
                       <XAxis
                         dataKey="displayName"
-                        stroke="#64748b"
+                        stroke={isDark ? "#a1a1aa" : "#64748b"}
                         fontSize={11}
                         interval={0}
                         angle={-25}
@@ -966,13 +908,21 @@ export default function GraphicsModule() {
                         tickMargin={10}
                       />
                       <YAxis
-                        stroke="#64748b"
+                        stroke={isDark ? "#a1a1aa" : "#64748b"}
                         fontSize={11}
                         tickFormatter={(v) =>
                           v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v
                         }
                       />
-                      <Tooltip content={renderTooltip} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: isDark ? "#27272a" : "#fff",
+                          color: isDark ? "#fff" : "#000",
+                          borderRadius: "8px",
+                          border: isDark ? "1px solid #27272a" : "1px solid #e2e8f0",
+                          fontSize: "12px",
+                        }}
+                      />
                       {showLegend && <Legend verticalAlign="top" height={36} />}
                       <Area
                         type="monotone"
@@ -989,7 +939,15 @@ export default function GraphicsModule() {
 
                   {(chartType === "pie" || chartType === "donut") && (
                     <PieChart>
-                      <Tooltip content={renderTooltip} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: isDark ? "#27272a" : "#fff",
+                          color: isDark ? "#fff" : "#000",
+                          borderRadius: "8px",
+                          border: isDark ? "1px solid #27272a" : "1px solid #e2e8f0",
+                          fontSize: "12px",
+                        }}
+                      />
                       {showLegend && (
                         <Legend
                           layout="horizontal"
@@ -1013,10 +971,10 @@ export default function GraphicsModule() {
                             key={`cell-${index}`}
                             fill={
                               activePalette.colors[
-                                index % activePalette.colors.length
+                              index % activePalette.colors.length
                               ]
                             }
-                            stroke="#ffffff"
+                            stroke={isDark ? "#18181b" : "#ffffff"}
                             strokeWidth={2}
                           />
                         ))}
@@ -1032,13 +990,13 @@ export default function GraphicsModule() {
                       {showGrid && (
                         <CartesianGrid
                           strokeDasharray="3 3"
-                          stroke="#e2e8f0"
+                          stroke={isDark ? "#27272a" : "#e2e8f0"}
                           vertical={false}
                         />
                       )}
                       <XAxis
                         dataKey="displayName"
-                        stroke="#64748b"
+                        stroke={isDark ? "#a1a1aa" : "#64748b"}
                         fontSize={11}
                         interval={0}
                         angle={-25}
@@ -1046,13 +1004,21 @@ export default function GraphicsModule() {
                         tickMargin={10}
                       />
                       <YAxis
-                        stroke="#64748b"
+                        stroke={isDark ? "#a1a1aa" : "#64748b"}
                         fontSize={11}
                         tickFormatter={(v) =>
                           v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v
                         }
                       />
-                      <Tooltip content={renderTooltip} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: isDark ? "#27272a" : "#fff",
+                          color: isDark ? "#fff" : "#000",
+                          borderRadius: "8px",
+                          border: isDark ? "1px solid #27272a" : "1px solid #e2e8f0",
+                          fontSize: "12px",
+                        }}
+                      />
                       {showLegend && <Legend verticalAlign="top" height={36} />}
                       <Bar
                         dataKey="value"
@@ -1081,17 +1047,18 @@ export default function GraphicsModule() {
                 </ResponsiveContainer>
               </div>
             ) : (
-              <div className="h-[300px] flex flex-col items-center justify-center text-slate-400 text-xs">
+              <div className="h-[300px] flex flex-col items-center justify-center text-slate-400 dark:text-zinc-500 text-xs">
                 <BarChart3 className="w-10 h-10 mb-2 opacity-30" />
-                <p className="font-medium text-slate-500">
+                <p className="font-medium text-slate-500 dark:text-zinc-300">
                   No se pudieron generar datos para esta combinación
                 </p>
-                <p className="text-[11px] text-slate-400 mt-1">
+                <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-1">
                   Verifique que la columna seleccionada tenga registros válidos o
                   seleccione "Conteo de filas".
                 </p>
               </div>
             )}
+
           </div>
         </div>
       )}

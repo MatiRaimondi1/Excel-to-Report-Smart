@@ -82,23 +82,23 @@ export default function PdfReport() {
   const themeColors = {
     indigo: {
       primary: "bg-indigo-600",
-      text: "text-indigo-600",
-      border: "border-indigo-600",
-      badge: "bg-indigo-50 text-indigo-700",
+      text: "text-indigo-600 dark:text-indigo-400",
+      border: "border-indigo-600 dark:border-indigo-500",
+      badge: "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300",
       chartColor: "#4f46e5",
     },
     emerald: {
       primary: "bg-emerald-600",
-      text: "text-emerald-600",
-      border: "border-emerald-600",
-      badge: "bg-emerald-50 text-emerald-700",
+      text: "text-emerald-600 dark:text-emerald-400",
+      border: "border-emerald-600 dark:border-emerald-500",
+      badge: "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300",
       chartColor: "#059669",
     },
     slate: {
-      primary: "bg-slate-800",
-      text: "text-slate-800",
-      border: "border-slate-800",
-      badge: "bg-slate-100 text-slate-700",
+      primary: "bg-slate-800 dark:bg-zinc-800",
+      text: "text-slate-800 dark:text-zinc-200",
+      border: "border-slate-800 dark:border-zinc-700",
+      badge: "bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300",
       chartColor: "#334155",
     },
   };
@@ -106,7 +106,7 @@ export default function PdfReport() {
   const currentTheme = themeColors[templateTheme];
 
   return (
-    <div className="w-full bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden mb-6">
+    <div className="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm overflow-hidden mb-6">
       {/* CSS para ocultar todo lo que no sea el reporte al imprimir */}
       <style>{`
         @media print {
@@ -124,6 +124,7 @@ export default function PdfReport() {
             margin: 0;
             padding: 20px;
             background: white !important;
+            color: #0f172a !important;
             box-shadow: none !important;
             border: none !important;
           }
@@ -136,17 +137,17 @@ export default function PdfReport() {
       {/* Header Desplegable */}
       <div
         onClick={() => setIsOpen(!isOpen)}
-        className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between cursor-pointer hover:bg-slate-100/80 transition-colors no-print"
+        className="p-4 bg-slate-50 dark:bg-zinc-900/90 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between cursor-pointer hover:bg-slate-100/80 dark:hover:bg-zinc-800/80 transition-colors no-print"
       >
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-emerald-100 text-emerald-700 rounded-lg">
+          <div className="p-2 bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-400 rounded-lg">
             <FileText className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-semibold text-slate-800 text-sm">
+            <h3 className="font-semibold text-slate-800 dark:text-zinc-100 text-sm">
               Configuración y Vista Previa de Reporte PDF
             </h3>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-zinc-400">
               Personaliza la plantilla y exporta el documento final listo para
               distribución
             </p>
@@ -154,24 +155,24 @@ export default function PdfReport() {
         </div>
 
         {isOpen ? (
-          <ChevronUp className="w-4 h-4 text-slate-400" />
+          <ChevronUp className="w-4 h-4 text-slate-400 dark:text-zinc-500" />
         ) : (
-          <ChevronDown className="w-4 h-4 text-slate-400" />
+          <ChevronDown className="w-4 h-4 text-slate-400 dark:text-zinc-500" />
         )}
       </div>
 
       {isOpen && (
         <div className="p-6 space-y-6">
           {/* Panel de Personalización (No imprimible) */}
-          <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-4 no-print">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
-              <Settings2 className="w-4 h-4 text-emerald-600" />
+          <div className="p-4 bg-slate-50 dark:bg-zinc-950/70 border border-slate-200 dark:border-zinc-800 rounded-xl space-y-4 no-print">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 flex items-center gap-2">
+              <Settings2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               Opciones de Personalización
             </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
               <div>
-                <label htmlFor="report-title-input" className="block text-slate-600 font-medium mb-1">
+                <label htmlFor="report-title-input" className="block text-slate-600 dark:text-zinc-300 font-medium mb-1">
                   Título del Reporte
                 </label>
                 <input
@@ -179,19 +180,19 @@ export default function PdfReport() {
                   type="text"
                   value={reportTitle}
                   onChange={(e) => setReportTitle(e.target.value)}
-                  className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-1.5 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 text-slate-800 dark:text-zinc-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
 
               <div>
-                <label htmlFor="report-theme-select" className="block text-slate-600 font-medium mb-1">
+                <label htmlFor="report-theme-select" className="block text-slate-600 dark:text-zinc-300 font-medium mb-1">
                   Tema / Estilo Visual
                 </label>
                 <select
                   id="report-theme-select"
                   value={templateTheme}
                   onChange={(e) => setTemplateTheme(e.target.value)}
-                  className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-1.5 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 text-slate-800 dark:text-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   <option value="indigo">Corporativo (Índigo)</option>
                   <option value="emerald">Financiero (Esmeralda)</option>
@@ -200,13 +201,13 @@ export default function PdfReport() {
               </div>
 
               <div>
-                <label className="block text-slate-600 font-medium mb-1">
+                <label className="block text-slate-600 dark:text-zinc-300 font-medium mb-1">
                   Máx. Filas en PDF
                 </label>
                 <select
                   value={maxRowsPrint}
                   onChange={(e) => setMaxRowsPrint(Number(e.target.value))}
-                  className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-1.5 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 text-slate-800 dark:text-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   <option value={20}>Top 20 Registros</option>
                   <option value={50}>Top 50 Registros</option>
@@ -226,13 +227,13 @@ export default function PdfReport() {
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-6 pt-3 border-t border-slate-200/70 text-xs text-slate-600">
+            <div className="flex flex-wrap items-center gap-6 pt-3 border-t border-slate-200/70 dark:border-zinc-800 text-xs text-slate-600 dark:text-zinc-300">
               <label className="flex items-center gap-2 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={showKPIs}
                   onChange={(e) => setShowKPIs(e.target.checked)}
-                  className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                  className="rounded border-slate-300 dark:border-zinc-700 text-emerald-600 focus:ring-emerald-500"
                 />
                 <span>Incluir Tarjetas de KPIs</span>
               </label>
@@ -242,19 +243,20 @@ export default function PdfReport() {
                   type="checkbox"
                   checked={showChart}
                   onChange={(e) => setShowChart(e.target.checked)}
-                  className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                  className="rounded border-slate-300 dark:border-zinc-700 text-emerald-600 focus:ring-emerald-500"
                 />
                 <span className="flex items-center gap-1.5">
-                  <BarChart3 className="w-3.5 h-3.5 text-emerald-600" />
+                  <BarChart3 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                   Incluir Gráfico en PDF
                 </span>
               </label>
             </div>
           </div>
 
+
           {/* Vista Previa de la Documentación Imprimible */}
-          <div className="border border-slate-200 rounded-xl p-4 bg-slate-100/50">
-            <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 mb-3 no-print">
+          <div className="border border-slate-200 dark:border-zinc-800 rounded-xl p-4 bg-slate-100/50 dark:bg-zinc-950/80">
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-zinc-400 mb-3 no-print">
               <Eye className="w-4 h-4" />
               Vista Previa del Documento Final:
             </div>
@@ -263,27 +265,27 @@ export default function PdfReport() {
             <div
               id="pdf-printable-area"
               ref={printRef}
-              className="bg-white p-8 border border-slate-200 rounded-lg shadow-sm space-y-6 max-w-4xl mx-auto text-slate-800"
+              className="bg-white dark:bg-zinc-900 p-8 border border-slate-200 dark:border-zinc-800 rounded-lg shadow-sm space-y-6 max-w-4xl mx-auto text-slate-800 dark:text-zinc-100"
             >
               {/* Encabezado del PDF */}
               <div
                 className={`border-b-2 ${currentTheme.border} pb-4 flex justify-between items-start`}
               >
                 <div>
-                  <h1 className="text-2xl font-bold text-slate-900">
+                  <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
                     {reportTitle}
                   </h1>
-                  <p className="text-xs text-slate-500 mt-1">
+                  <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">
                     Origen:{" "}
-                    <span className="font-medium text-slate-700">
+                    <span className="font-medium text-slate-700 dark:text-zinc-300">
                       {fileName}
                     </span>{" "}
                     | Generado automáticamente
                   </p>
                 </div>
-                <div className="text-right text-xs text-slate-400">
+                <div className="text-right text-xs text-slate-400 dark:text-zinc-500">
                   <p>Fecha de emisión:</p>
-                  <p className="font-medium text-slate-600">
+                  <p className="font-medium text-slate-600 dark:text-zinc-300">
                     {new Date().toLocaleDateString()}
                   </p>
                 </div>
@@ -293,7 +295,7 @@ export default function PdfReport() {
               {showKPIs && (
                 <div className="grid grid-cols-3 gap-4">
                   <div
-                    className={`p-3 rounded-lg border border-slate-100 ${currentTheme.badge}`}
+                    className={`p-3 rounded-lg border border-slate-100 dark:border-zinc-800 ${currentTheme.badge}`}
                   >
                     <span className="text-xs font-medium block">
                       Total Filas Procesadas
@@ -301,7 +303,7 @@ export default function PdfReport() {
                     <span className="text-lg font-bold">{totalRows}</span>
                   </div>
                   <div
-                    className={`p-3 rounded-lg border border-slate-100 ${currentTheme.badge}`}
+                    className={`p-3 rounded-lg border border-slate-100 dark:border-zinc-800 ${currentTheme.badge}`}
                   >
                     <span className="text-xs font-medium block">
                       Columnas Presentes
@@ -309,7 +311,7 @@ export default function PdfReport() {
                     <span className="text-lg font-bold">{totalCols}</span>
                   </div>
                   <div
-                    className={`p-3 rounded-lg border border-slate-100 ${currentTheme.badge}`}
+                    className={`p-3 rounded-lg border border-slate-100 dark:border-zinc-800 ${currentTheme.badge}`}
                   >
                     <span className="text-xs font-medium block">
                       Muestra Exportada
@@ -323,9 +325,9 @@ export default function PdfReport() {
 
               {/* Gráfico Visual en el PDF */}
               {showChart && pdfChartData.length > 0 && (
-                <div className="border border-slate-200 rounded-lg p-3 bg-slate-50/40">
-                  <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                    <BarChart3 className="w-3.5 h-3.5 text-slate-500" />
+                <div className="border border-slate-200 dark:border-zinc-800 rounded-lg p-3 bg-slate-50/40 dark:bg-zinc-950/50">
+                  <h3 className="text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <BarChart3 className="w-3.5 h-3.5 text-slate-500 dark:text-zinc-400" />
                     Resumen Gráfico ({pdfMetricCol || "Distribución"} por {pdfCategoryCol})
                   </h3>
                   <div className="w-full h-44">
@@ -336,19 +338,20 @@ export default function PdfReport() {
                       >
                         <CartesianGrid
                           strokeDasharray="3 3"
-                          stroke="#e2e8f0"
+                          stroke="#71717a"
+                          strokeOpacity={0.25}
                           vertical={false}
                         />
                         <XAxis
                           dataKey="name"
-                          stroke="#64748b"
+                          stroke="#71717a"
                           fontSize={9}
                           interval={0}
                           angle={-15}
                           textAnchor="end"
                         />
                         <YAxis
-                          stroke="#64748b"
+                          stroke="#71717a"
                           fontSize={9}
                           tickFormatter={(v) =>
                             v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v
@@ -367,18 +370,18 @@ export default function PdfReport() {
 
               {/* Tabla de Contenido del PDF */}
               <div>
-                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                <h3 className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mb-2">
                   Detalle de Registros
                 </h3>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
                       <tr className={`${currentTheme.primary} text-white`}>
-                        <th className="p-2 border border-slate-300">#</th>
+                        <th className="p-2 border border-slate-300 dark:border-zinc-700">#</th>
                         {columns.map((col) => (
                           <th
                             key={col}
-                            className="p-2 border border-slate-300 font-semibold"
+                            className="p-2 border border-slate-300 dark:border-zinc-700 font-semibold"
                           >
                             {col}
                           </th>
@@ -389,15 +392,15 @@ export default function PdfReport() {
                       {processedData.slice(0, maxRowsPrint).map((row, idx) => (
                         <tr
                           key={idx}
-                          className={idx % 2 === 0 ? "bg-white" : "bg-slate-50"}
+                          className={idx % 2 === 0 ? "bg-white dark:bg-zinc-800" : "bg-slate-50 dark:bg-zinc-900"}
                         >
-                          <td className="p-2 border border-slate-200 text-slate-400 font-mono text-center">
+                          <td className="p-2 border border-slate-200 dark:border-zinc-800 text-slate-400 dark:text-zinc-500 font-mono text-center">
                             {idx + 1}
                           </td>
                           {columns.map((col) => (
                             <td
                               key={col}
-                              className="p-2 border border-slate-200 text-slate-700"
+                              className="p-2 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-200"
                             >
                               {row[col] !== undefined && row[col] !== null
                                 ? String(row[col])
@@ -412,7 +415,7 @@ export default function PdfReport() {
               </div>
 
               {/* Pie de Página del PDF */}
-              <div className="border-t border-slate-200 pt-4 flex justify-between items-center text-[10px] text-slate-400">
+              <div className="border-t border-slate-200 dark:border-zinc-800 pt-4 flex justify-between items-center text-[10px] text-slate-400 dark:text-zinc-500">
                 <span>
                   Excel-to-PDF Smart Converter — Documento de ejecución local
                   sin conexión
