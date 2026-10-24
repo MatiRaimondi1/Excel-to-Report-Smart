@@ -52,4 +52,33 @@ describe("Aplicación Principal (App)", () => {
     expect(screen.getByText(/Configuración y Vista Previa de Reporte PDF/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/Buscar en todos los datos.../i)).toBeInTheDocument();
   });
+
+  it("debe permitir alternar entre tema claro y tema oscuro mediante el botón de tema", () => {
+    localStorage.clear();
+    document.documentElement.classList.remove("dark");
+
+    render(<App />);
+
+    const themeToggleBtn = screen.getByRole("button", {
+      name: /Cambiar a tema oscuro/i,
+    });
+    expect(themeToggleBtn).toBeInTheDocument();
+    expect(document.documentElement.classList.contains("dark")).toBe(false);
+
+    // Clic para activar tema oscuro
+    fireEvent.click(themeToggleBtn);
+
+    expect(document.documentElement.classList.contains("dark")).toBe(true);
+    expect(localStorage.getItem("theme")).toBe("dark");
+    expect(
+      screen.getByRole("button", { name: /Cambiar a tema claro/i }),
+    ).toBeInTheDocument();
+
+    // Clic nuevamente para volver al tema claro
+    fireEvent.click(screen.getByRole("button", { name: /Cambiar a tema claro/i }));
+
+    expect(document.documentElement.classList.contains("dark")).toBe(false);
+    expect(localStorage.getItem("theme")).toBe("light");
+  });
 });
+
