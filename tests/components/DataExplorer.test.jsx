@@ -162,4 +162,21 @@ describe("Componente DataExplorer", () => {
     expect(screen.queryByText("Producto 26")).not.toBeInTheDocument();
     expect(screen.getByText(/^Página/i).parentElement).toHaveTextContent("Página 1 de 2");
   });
+
+  it("debe colapsar y expandir la sección del explorador de datos al hacer clic en el encabezado", () => {
+    renderWithMockData(<DataExplorer />, {
+      initialData: mockSalesData,
+      initialColumns: mockSalesColumns,
+    });
+
+    const header = screen.getByText(/Explorador de Datos/i).closest("div");
+
+    expect(screen.getByPlaceholderText(/Buscar en todos los datos.../i)).toBeInTheDocument();
+
+    fireEvent.click(header);
+    expect(screen.queryByPlaceholderText(/Buscar en todos los datos.../i)).not.toBeInTheDocument();
+
+    fireEvent.click(header);
+    expect(screen.getByPlaceholderText(/Buscar en todos los datos.../i)).toBeInTheDocument();
+  });
 });
