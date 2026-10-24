@@ -16,7 +16,7 @@ export default function ReportHistory() {
   if (!reportHistory || reportHistory.length === 0) {
     return (
       <div className="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-8 text-center shadow-sm mb-6">
-        <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 mb-3">
+        <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 mb-3">
           <History className="w-6 h-6" />
         </div>
         <h3 className="font-semibold text-slate-800 dark:text-zinc-100 text-sm">
@@ -37,7 +37,7 @@ export default function ReportHistory() {
         className="p-4 bg-slate-50 dark:bg-zinc-900/90 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between cursor-pointer hover:bg-slate-100/80 dark:hover:bg-zinc-800/80 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 rounded-lg">
+          <div className="p-2 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 rounded-lg">
             <History className="w-5 h-5" />
           </div>
           <div>
@@ -55,7 +55,7 @@ export default function ReportHistory() {
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="text-xs font-semibold px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 rounded-full">
+          <span className="text-xs font-semibold px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 rounded-full">
             {reportHistory.length}
           </span>
           {isOpen ? (
@@ -89,7 +89,7 @@ export default function ReportHistory() {
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <FileCheck className="w-4 h-4 text-indigo-600 dark:text-indigo-400 flex-shrink-0" />
+                    <FileCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
                     <h4 className="font-semibold text-slate-800 dark:text-zinc-200 text-xs truncate max-w-[200px]">
                       {item.title}
                     </h4>
