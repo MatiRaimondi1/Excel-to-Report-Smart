@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { render } from "@testing-library/react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { DataProvider, DataContext } from "../src/context/DataContext"
 
 export const mockSalesData = [
@@ -89,6 +89,69 @@ export function MockDataProvider({
   const [error, setError] = useState(initialError);
   const [reportHistory, setReportHistory] = useState(initialHistory);
 
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedColumnFilter, setSelectedColumnFilter] = useState("");
+  const [columnFilterValue, setColumnFilterValue] = useState("");
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
+
+  const resetFilters = () => {
+    setSearchTerm("");
+    setSelectedColumnFilter("");
+    setColumnFilterValue("");
+    setSortConfig({ key: null, direction: "asc" });
+  };
+
+  const filteredData = useMemo(() => {
+    if (!processedData) return null;
+
+    const hasFilterOrSort = Boolean(
+      searchTerm || (selectedColumnFilter && columnFilterValue) || sortConfig.key
+    );
+
+    if (!hasFilterOrSort) return null;
+
+    let result = processedData.filter((row) => {
+      const matchesSearch = searchTerm
+        ? Object.values(row).some((val) =>
+            String(val ?? "")
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase())
+          )
+        : true;
+
+      let matchesColumn = true;
+      if (selectedColumnFilter && columnFilterValue) {
+        const cellValue = String(row[selectedColumnFilter] ?? "").toLowerCase();
+        matchesColumn = cellValue.includes(columnFilterValue.toLowerCase());
+      }
+
+      return matchesSearch && matchesColumn;
+    });
+
+    if (sortConfig.key) {
+      result = [...result].sort((a, b) => {
+        const valA = a[sortConfig.key] ?? "";
+        const valB = b[sortConfig.key] ?? "";
+
+        const numA = Number(valA);
+        const numB = Number(valB);
+
+        if (!isNaN(numA) && !isNaN(numB) && valA !== "" && valB !== "") {
+          return sortConfig.direction === "asc" ? numA - numB : numB - numA;
+        }
+
+        const strA = String(valA).toLowerCase();
+        const strB = String(valB).toLowerCase();
+
+        if (strA < strB) return sortConfig.direction === "asc" ? -1 : 1;
+        if (strA > strB) return sortConfig.direction === "asc" ? 1 : -1;
+        return 0;
+      });
+    }
+
+    return result;
+  }, [processedData, searchTerm, selectedColumnFilter, columnFilterValue, sortConfig]);
+
   const saveToHistory = (metadata) => {
     const entry = {
       id: Date.now(),
@@ -96,8 +159,16 @@ export function MockDataProvider({
       fileName: fileName || "Archivo",
       title: metadata.title || "Reporte",
       theme: metadata.theme || "indigo",
-      rowCount: metadata.rowCount || 0,
-      colCount: columns.length || 0,
+      rowCount: metadata.rowCount || (metadata.data ? metadata.data.length : 0),
+      colCount: metadata.columns ? metadata.columns.length : (columns?.length || 0),
+      columns: metadata.columns || columns || [],
+      data: metadata.data || [],
+      showKPIs: metadata.showKPIs ?? true,
+      showChart: metadata.showChart ?? true,
+      chartData: metadata.chartData || [],
+      metricCol: metadata.metricCol || "",
+      categoryCol: metadata.categoryCol || "",
+      date: metadata.date || new Date().toLocaleDateString(),
     };
     setReportHistory((prev) => [entry, ...prev]);
   };
@@ -111,6 +182,7 @@ export function MockDataProvider({
     setFileName("");
     setColumns([]);
     setError(null);
+    resetFilters();
   };
   const processFile = () => { };
 
@@ -121,6 +193,16 @@ export function MockDataProvider({
         setRawData,
         processedData,
         setProcessedData,
+        filteredData,
+        searchTerm,
+        setSearchTerm,
+        selectedColumnFilter,
+        setSelectedColumnFilter,
+        columnFilterValue,
+        setColumnFilterValue,
+        sortConfig,
+        setSortConfig,
+        resetFilters,
         fileName,
         setFileName,
         columns,

@@ -13,6 +13,7 @@ import {
   Layers,
   Palette,
   Check,
+  Filter,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -79,18 +80,24 @@ const COLOR_PALETTES = {
 };
 
 export default function GraphicsModule() {
-  const { processedData, columns, fileName } = useData();
+  const { processedData, filteredData, sortConfig, columns, fileName } = useData();
   const { isDark } = useTheme();
   const [isOpen, setIsOpen] = useState(true);
   const chartContainerRef = useRef(null);
   const [isExporting, setIsExporting] = useState(false);
   const [copiedSuccess, setCopiedSuccess] = useState(false);
 
+  const currentData = useMemo(() => {
+    return filteredData !== null && filteredData !== undefined
+      ? filteredData
+      : processedData || [];
+  }, [filteredData, processedData]);
+
   // Columnas numéricas identificadas
   const numericColumns = useMemo(() => {
-    if (!processedData || processedData.length === 0) return [];
+    if (!currentData || currentData.length === 0) return [];
     return columns.filter((col) => {
-      const numericCount = processedData.filter((row) => {
+      const numericCount = currentData.filter((row) => {
         const val = row[col];
         return (
           val !== null &&
@@ -100,9 +107,9 @@ export default function GraphicsModule() {
           typeof val !== "boolean"
         );
       }).length;
-      return numericCount > processedData.length * 0.4;
+      return numericCount > currentData.length * 0.4;
     });
-  }, [processedData, columns]);
+  }, [currentData, columns]);
 
   // Estados de configuración de visualización
   const [chartType, setChartType] = useState("bar"); // 'bar', 'bar-horizontal', 'line', 'area', 'pie', 'donut', 'composed'
@@ -137,11 +144,11 @@ export default function GraphicsModule() {
 
   // Cálculo y agregación de datos para Recharts
   const aggregatedData = useMemo(() => {
-    if (!processedData || processedData.length === 0 || !categoryCol) return [];
+    if (!currentData || currentData.length === 0 || !categoryCol) return [];
 
     const grouped = new Map();
 
-    processedData.forEach((row) => {
+    currentData.forEach((row) => {
       const rawCategory = row[categoryCol];
       const categoryKey =
         rawCategory !== null && rawCategory !== undefined && rawCategory !== ""
@@ -211,8 +218,28 @@ export default function GraphicsModule() {
       return item;
     });
 
-    // Ordenamiento
-    if (sortBy === "desc") {
+    // Ordenamiento: si hay orden activo en DataExplorer, se sincroniza el gráfico
+    if (sortConfig?.key) {
+      if (sortConfig.key === categoryCol) {
+        result.sort((a, b) => {
+          const strA = String(a.name).toLowerCase();
+          const strB = String(b.name).toLowerCase();
+          return sortConfig.direction === "asc"
+            ? strA.localeCompare(strB)
+            : strB.localeCompare(strA);
+        });
+      } else if (sortConfig.key === metricCol) {
+        result.sort((a, b) =>
+          sortConfig.direction === "asc" ? a.value - b.value : b.value - a.value
+        );
+      } else {
+        if (sortBy === "desc") {
+          result.sort((a, b) => b.value - a.value);
+        } else if (sortBy === "asc") {
+          result.sort((a, b) => a.value - b.value);
+        }
+      }
+    } else if (sortBy === "desc") {
       result.sort((a, b) => b.value - a.value);
     } else if (sortBy === "asc") {
       result.sort((a, b) => a.value - b.value);
@@ -225,12 +252,13 @@ export default function GraphicsModule() {
 
     return result;
   }, [
-    processedData,
+    currentData,
     categoryCol,
     metricCol,
     secondaryMetricCol,
     aggregation,
     sortBy,
+    sortConfig,
     limit,
   ]);
 
@@ -260,66 +288,133 @@ export default function GraphicsModule() {
   // Colores activos
   const activePalette = COLOR_PALETTES[selectedPalette] || COLOR_PALETTES.emerald;
 
-  // Exportar gráfico como imagen PNG usando Canvas
-  const handleDownloadChart = () => {
-    if (!chartContainerRef.current) return;
+  // Exportar el SVG real de Recharts como PNG, conservando estilos y dimensiones.
+  const handleDownloadChart = async () => {
+    const container = chartContainerRef.current;
+    if (!container || isExporting) return;
+
+    // No usar querySelector("svg") a secas: puede devolver el SVG de un icono
+    // (por ejemplo, 14 × 14) en lugar del SVG que dibuja el gráfico.
+    const svgCandidates = Array.from(container.querySelectorAll("svg"));
+    const getSvgDimensions = (svg) => {
+      const viewBox = svg.viewBox?.baseVal;
+      const rect = svg.getBoundingClientRect();
+      const widthAttr = Number.parseFloat(svg.getAttribute("width"));
+      const heightAttr = Number.parseFloat(svg.getAttribute("height"));
+      return {
+        width: Math.round((Number.isFinite(widthAttr) && widthAttr > 0 ? widthAttr : 0) || viewBox?.width || rect.width || 0),
+        height: Math.round((Number.isFinite(heightAttr) && heightAttr > 0 ? heightAttr : 0) || viewBox?.height || rect.height || 0),
+      };
+    };
+    const validCandidates = svgCandidates
+      .map((svg) => ({ svg, ...getSvgDimensions(svg) }))
+      .filter(({ width, height }) => width >= 100 && height >= 100)
+      .sort((a, b) => {
+        const aSurface = a.svg.classList.contains("recharts-surface") ? 1 : 0;
+        const bSurface = b.svg.classList.contains("recharts-surface") ? 1 : 0;
+        if (aSurface !== bSurface) return bSurface - aSurface;
+        return (b.width * b.height) - (a.width * a.height);
+      });
+    const selected = validCandidates[0];
+    const svgElement = selected?.svg;
+
+    if (!svgElement) {
+      const sizes = svgCandidates.map((svg) => {
+        const { width, height } = getSvgDimensions(svg);
+        return `${width} × ${height} (${svg.getAttribute("class") || "sin clase"})`;
+      });
+      console.error("No se encontró un SVG de gráfico con dimensiones válidas.", sizes);
+      window.alert("No se encontró el gráfico para exportar. Comprueba que el gráfico esté visible y vuelve a intentarlo.");
+      return;
+    }
+
     setIsExporting(true);
+    let svgUrl;
 
     try {
-      const svgElement = chartContainerRef.current.querySelector("svg");
-      if (!svgElement) {
-        setIsExporting(false);
-        return;
+      // Las dimensiones corresponden al SVG del gráfico, nunca a un icono pequeño.
+      const { width, height } = selected;
+
+      const clone = svgElement.cloneNode(true);
+      clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+      clone.setAttribute("width", String(width));
+      clone.setAttribute("height", String(height));
+      if (!clone.hasAttribute("viewBox")) {
+        clone.setAttribute("viewBox", `0 0 ${width} ${height}`);
       }
 
-      const svgString = new XMLSerializer().serializeToString(svgElement);
-      const svgBlob = new Blob([svgString], {
-        type: "image/svg+xml;charset=utf-8",
+      // Copiar estilos calculados al SVG exportado para que no dependa del CSS de la página.
+      const originalNodes = [svgElement, ...svgElement.querySelectorAll("*")];
+      const clonedNodes = [clone, ...clone.querySelectorAll("*")];
+      originalNodes.forEach((node, index) => {
+        const target = clonedNodes[index];
+        if (!target) return;
+        const computed = window.getComputedStyle(node);
+        const properties = [
+          "color", "font-family", "font-size", "font-weight", "font-style",
+          "fill", "fill-opacity", "stroke", "stroke-width", "stroke-dasharray",
+          "stroke-linecap", "stroke-linejoin", "opacity", "text-anchor",
+          "dominant-baseline", "visibility", "display"
+        ];
+        properties.forEach((property) => {
+          const value = computed.getPropertyValue(property);
+          if (value) target.style.setProperty(property, value);
+        });
       });
-      const URLObj = window.URL || window.webkitURL || window;
-      const blobURL = URLObj.createObjectURL(svgBlob);
+
+      const svgBlob = new Blob(
+        [new XMLSerializer().serializeToString(clone)],
+        { type: "image/svg+xml;charset=utf-8" }
+      );
+      svgUrl = URL.createObjectURL(svgBlob);
 
       const image = new Image();
-      image.onload = () => {
-        const bbox = svgElement.getBoundingClientRect();
-        const width = bbox.width || 800;
-        const height = bbox.height || 450;
-        const scale = 2; // Mayor resolución
+      image.decoding = "async";
+      await new Promise((resolve, reject) => {
+        image.onload = resolve;
+        image.onerror = () => reject(new Error("El navegador no pudo procesar el SVG del gráfico."));
+        image.src = svgUrl;
+      });
 
-        const canvas = document.createElement("canvas");
-        canvas.width = width * scale;
-        canvas.height = height * scale;
-        const ctx = canvas.getContext("2d");
+      const scale = 2;
+      const canvas = document.createElement("canvas");
+      canvas.width = width * scale;
+      canvas.height = height * scale;
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error("No se pudo crear el contexto del canvas.");
 
-        if (ctx) {
-          ctx.scale(scale, scale);
-          ctx.fillStyle = "#ffffff";
-          ctx.fillRect(0, 0, width, height);
-          ctx.drawImage(image, 0, 0, width, height);
+      context.fillStyle = "#ffffff";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.scale(scale, scale);
+      context.drawImage(image, 0, 0, width, height);
 
-          const pngUrl = canvas.toDataURL("image/png");
-          const downloadLink = document.createElement("a");
-          downloadLink.href = pngUrl;
-          downloadLink.download = `grafico-${fileName ? fileName.replace(/\.[^/.]+$/, "") : "analisis"}-${chartType}.png`;
-          document.body.appendChild(downloadLink);
-          downloadLink.click();
-          document.body.removeChild(downloadLink);
+      const pngBlob = await new Promise((resolve, reject) => {
+        canvas.toBlob((blob) => {
+          if (!blob || blob.size < 1000) {
+            reject(new Error(`El PNG generado está vacío o es demasiado pequeño (${blob?.size ?? 0} bytes).`));
+          } else {
+            resolve(blob);
+          }
+        }, "image/png");
+      });
 
-          setCopiedSuccess(true);
-          setTimeout(() => setCopiedSuccess(false), 3000);
-        }
-        URLObj.revokeObjectURL(blobURL);
-        setIsExporting(false);
-      };
+      const pngUrl = URL.createObjectURL(pngBlob);
+      const link = document.createElement("a");
+      const baseName = fileName ? fileName.replace(/\.[^/.]+$/, "") : "analisis";
+      link.href = pngUrl;
+      link.download = `grafico-${baseName}-${chartType}.png`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(pngUrl), 1500);
 
-      image.onerror = () => {
-        URLObj.revokeObjectURL(blobURL);
-        setIsExporting(false);
-      };
-
-      image.src = blobURL;
-    } catch (e) {
-      console.error("Error al exportar gráfico:", e);
+      setCopiedSuccess(true);
+      window.setTimeout(() => setCopiedSuccess(false), 3000);
+    } catch (error) {
+      console.error("Error al exportar gráfico como PNG:", error);
+      window.alert(`No se pudo exportar el gráfico. ${error.message || "Revisá la consola del navegador para más detalles."}`);
+    } finally {
+      if (svgUrl) URL.revokeObjectURL(svgUrl);
       setIsExporting(false);
     }
   };
@@ -342,6 +437,12 @@ export default function GraphicsModule() {
               <h3 className="font-semibold text-slate-800 dark:text-zinc-100 text-sm">
                 Módulo de Gráficos Interactivos
               </h3>
+              {filteredData !== null && filteredData !== undefined && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300">
+                  <Filter className="w-3 h-3" />
+                  Sincronizado con filtro ({currentData.length} filas)
+                </span>
+              )}
             </div>
             <p className="text-xs text-slate-500 dark:text-zinc-400">
               Visualización dinámica, métricas comparativas y exportación de

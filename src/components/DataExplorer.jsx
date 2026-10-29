@@ -14,21 +14,56 @@ import {
 } from "lucide-react";
 
 export default function DataExplorer() {
-  const { processedData, rawData, columns } = useData();
-  const [isOpen, setIsOpen] = useState(true);
+  const {
+    processedData,
+    rawData,
+    columns,
+    searchTerm: ctxSearchTerm,
+    setSearchTerm: ctxSetSearchTerm,
+    selectedColumnFilter: ctxSelectedColumnFilter,
+    setSelectedColumnFilter: ctxSetSelectedColumnFilter,
+    columnFilterValue: ctxColumnFilterValue,
+    setColumnFilterValue: ctxSetColumnFilterValue,
+    sortConfig: ctxSortConfig,
+    setSortConfig: ctxSetSortConfig,
+    filteredData: ctxFilteredData,
+    resetFilters: ctxResetFilters,
+  } = useData();
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
+  const [isOpen, setIsOpen] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [selectedColumnFilter, setSelectedColumnFilter] = useState("");
-  const [columnFilterValue, setColumnFilterValue] = useState("");
 
-  const baseData = processedData || rawData;
+  // Soporte de compatibilidad si el provider no expone las funciones de filtro
+  const [localSearchTerm, setLocalSearchTerm] = useState("");
+  const [localSortConfig, setLocalSortConfig] = useState({ key: null, direction: "asc" });
+  const [localSelectedColumnFilter, setLocalSelectedColumnFilter] = useState("");
+  const [localColumnFilterValue, setLocalColumnFilterValue] = useState("");
 
-  const filteredData = useMemo(() => {
-    if (!baseData) return [];
+  const isControlled = typeof ctxSetSearchTerm === "function";
 
+  const searchTerm = isControlled ? ctxSearchTerm : localSearchTerm;
+  const setSearchTerm = isControlled ? ctxSetSearchTerm : setLocalSearchTerm;
+
+  const selectedColumnFilter = isControlled ? ctxSelectedColumnFilter : localSelectedColumnFilter;
+  const setSelectedColumnFilter = isControlled ? ctxSetSelectedColumnFilter : setLocalSelectedColumnFilter;
+
+  const columnFilterValue = isControlled ? ctxColumnFilterValue : localColumnFilterValue;
+  const setColumnFilterValue = isControlled ? ctxSetColumnFilterValue : setLocalColumnFilterValue;
+
+  const fallbackSortConfig = useMemo(() => ({ key: null, direction: "asc" }), []);
+  const sortConfig = useMemo(() => {
+    return isControlled ? (ctxSortConfig || fallbackSortConfig) : localSortConfig;
+  }, [isControlled, ctxSortConfig, fallbackSortConfig, localSortConfig]);
+  const setSortConfig = isControlled ? ctxSetSortConfig : setLocalSortConfig;
+
+  const baseData = useMemo(() => {
+    return processedData || rawData || [];
+  }, [processedData, rawData]);
+
+  // Fallback si no está controlado globalmente
+  const localFilteredData = useMemo(() => {
+    if (isControlled) return null;
     return baseData.filter((row) => {
       const matchesSearch = Object.values(row).some((val) =>
         String(val ?? "")
@@ -44,10 +79,11 @@ export default function DataExplorer() {
 
       return matchesSearch && matchesColumn;
     });
-  }, [baseData, searchTerm, selectedColumnFilter, columnFilterValue]);
+  }, [isControlled, baseData, searchTerm, selectedColumnFilter, columnFilterValue]);
 
-  const sortedData = useMemo(() => {
-    const dataToSort = [...filteredData];
+  const localSortedData = useMemo(() => {
+    if (isControlled) return null;
+    const dataToSort = [...(localFilteredData || [])];
     if (!sortConfig.key) return dataToSort;
 
     return dataToSort.sort((a, b) => {
@@ -68,7 +104,15 @@ export default function DataExplorer() {
       if (strA > strB) return sortConfig.direction === "asc" ? 1 : -1;
       return 0;
     });
-  }, [filteredData, sortConfig]);
+  }, [isControlled, localFilteredData, sortConfig]);
+
+  // Si está controlado y hay filtro/orden, usamos ctxFilteredData; si no hay filtro, baseData
+  const sortedData = useMemo(() => {
+    if (isControlled) {
+      return ctxFilteredData !== null ? ctxFilteredData : baseData;
+    }
+    return localSortedData || [];
+  }, [isControlled, ctxFilteredData, baseData, localSortedData]);
 
   const totalPages = Math.ceil(sortedData.length / itemsPerPage) || 1;
   const paginatedData = useMemo(() => {
@@ -85,10 +129,14 @@ export default function DataExplorer() {
   };
 
   const handleResetFilters = () => {
-    setSearchTerm("");
-    setSelectedColumnFilter("");
-    setColumnFilterValue("");
-    setSortConfig({ key: null, direction: "asc" });
+    if (isControlled && ctxResetFilters) {
+      ctxResetFilters();
+    } else {
+      setSearchTerm("");
+      setSelectedColumnFilter("");
+      setColumnFilterValue("");
+      setSortConfig({ key: null, direction: "asc" });
+    }
     setCurrentPage(1);
   };
 
@@ -117,7 +165,7 @@ export default function DataExplorer() {
 
         <div className="flex items-center gap-4">
           <div className="hidden sm:flex items-center gap-2 text-xs">
-            {searchTerm || selectedColumnFilter ? (
+            {searchTerm || selectedColumnFilter || sortConfig.key ? (
               <span className="px-2.5 py-1 rounded-full font-medium bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300">
                 {sortedData.length} de {baseData.length} {sortedData.length === 1 ? "fila" : "filas"}
               </span>

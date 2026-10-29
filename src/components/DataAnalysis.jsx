@@ -19,22 +19,28 @@ import {
 } from "recharts";
 
 export default function DataAnalysis() {
-  const { processedData, columns } = useData();
+  const { processedData, filteredData, columns } = useData();
   const { isDark } = useTheme();
   const [isOpen, setIsOpen] = useState(true);
 
+  const currentData = useMemo(() => {
+    return filteredData !== null && filteredData !== undefined
+      ? filteredData
+      : processedData || [];
+  }, [filteredData, processedData]);
+
   const numericColumns = useMemo(() => {
-    if (!processedData || processedData.length === 0) return [];
+    if (!currentData || currentData.length === 0) return [];
     return columns.filter((col) => {
-      const numericCount = processedData.filter((row) => {
+      const numericCount = currentData.filter((row) => {
         const val = row[col];
         return (
           val !== null && val !== undefined && val !== "" && !isNaN(Number(val))
         );
       }).length;
-      return numericCount > processedData.length * 0.5;
+      return numericCount > currentData.length * 0.5;
     });
-  }, [processedData, columns]);
+  }, [currentData, columns]);
 
   const [userMetricCol, setUserMetricCol] = useState("");
   const selectedMetricCol =
@@ -53,11 +59,11 @@ export default function DataAnalysis() {
       : numericColumns[0] || "";
 
   const kpiStats = useMemo(() => {
-    if (!processedData || !selectedMetricCol) {
+    if (!currentData || !selectedMetricCol) {
       return { sum: 0, avg: 0, min: 0, max: 0, count: 0 };
     }
 
-    const values = processedData
+    const values = currentData
       .map((row) => Number(row[selectedMetricCol]))
       .filter((val) => !isNaN(val));
 
@@ -77,13 +83,13 @@ export default function DataAnalysis() {
       max: max.toLocaleString(undefined, { maximumFractionDigits: 2 }),
       count: values.length,
     };
-  }, [processedData, selectedMetricCol]);
+  }, [currentData, selectedMetricCol]);
 
   const chartData = useMemo(() => {
-    if (!processedData || !selectedXAxis || !selectedYAxis) return [];
+    if (!currentData || !selectedXAxis || !selectedYAxis) return [];
 
     const aggregated = {};
-    processedData.forEach((row) => {
+    currentData.forEach((row) => {
       const key = String(row[selectedXAxis] ?? "Sin Categoría").slice(0, 15);
       const val = Number(row[selectedYAxis]) || 0;
       aggregated[key] = (aggregated[key] || 0) + val;
@@ -92,7 +98,7 @@ export default function DataAnalysis() {
     return Object.entries(aggregated)
       .map(([name, value]) => ({ name, value }))
       .slice(0, 10);
-  }, [processedData, selectedXAxis, selectedYAxis]);
+  }, [currentData, selectedXAxis, selectedYAxis]);
 
   if (!processedData || processedData.length === 0) return null;
 
@@ -297,5 +303,4 @@ export default function DataAnalysis() {
       )}
     </div>
   );
-
 }
