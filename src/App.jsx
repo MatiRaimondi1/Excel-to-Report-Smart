@@ -14,10 +14,11 @@ import {
   Moon,
   Sun,
   RotateCcwClock,
+  RefreshCw,
 } from "lucide-react";
 
 export function MainContent() {
-  const { rawData, fileName } = useData();
+  const { rawData, fileName, resetData } = useData();
   const { isDark, toggleTheme } = useTheme();
   const [activeTab, setActiveTab] = useState("create");
 
@@ -28,16 +29,17 @@ export function MainContent() {
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-6">
           {/* Brand */}
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-sm shadow-emerald-200 dark:shadow-none">
+            <div className="flex h-10 w-10 shrink-0 select-none items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow-md shadow-emerald-200/70 transition-transform duration-200 dark:shadow-none">
               <FileSpreadsheet className="h-5 w-5" />
             </div>
 
-            <div className="min-w-0">
-              <h1 className="truncate text-[15px] font-bold tracking-tight text-slate-900 dark:text-white sm:text-base">
-                Excel-to-PDF
+            <div className="min-w-0 select-none" aria-label="PDF to Report Smart Converter">
+              <h1 className="truncate text-[14px] font-extrabold leading-tight tracking-[-0.03em] text-slate-900 dark:text-white sm:text-base">
+                <span className="text-emerald-700 dark:text-emerald-400">PDF to Report</span>{" "}
+                <span className="font-semibold tracking-tight text-slate-700 dark:text-zinc-200">Smart Converter</span>
               </h1>
 
-              <p className="hidden max-w-md truncate text-xs text-slate-500 dark:text-zinc-400 sm:block">
+              <p className="hidden max-w-md truncate pt-0.5 text-xs font-medium tracking-wide text-slate-500 dark:text-zinc-400 sm:block">
                 Convierte tus planillas en reportes profesionales
               </p>
             </div>
@@ -62,8 +64,8 @@ export function MainContent() {
             >
               <FilePlusCorner
                 className={`h-4 w-4 ${activeTab === "create"
-                    ? "text-emerald-600 dark:text-emerald-400"
-                    : "text-slate-400 dark:text-zinc-500"
+                  ? "text-emerald-600 dark:text-emerald-400"
+                  : "text-slate-400 dark:text-zinc-500"
                   }`}
               />
               Crear reporte
@@ -83,8 +85,8 @@ export function MainContent() {
             >
               <RotateCcwClock
                 className={`h-4 w-4 ${activeTab === "history"
-                    ? "text-emerald-600 dark:text-emerald-400"
-                    : "text-slate-400 dark:text-zinc-500"
+                  ? "text-emerald-600 dark:text-emerald-400"
+                  : "text-slate-400 dark:text-zinc-500"
                   }`}
               />
               Historial
@@ -101,6 +103,16 @@ export function MainContent() {
                   {fileName}
                 </span>
               </div>
+            )}
+
+            {rawData && (
+              <button
+                onClick={resetData}
+                className="inline-flex items-center gap-2 rounded-xl border border-emerald-200/80 dark:border-emerald-900/70 bg-white dark:bg-zinc-900 px-3.5 py-2 text-sm font-semibold text-emerald-700 dark:text-emerald-300 shadow-sm transition-all duration-200 hover:border-emerald-300 dark:hover:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:shadow focus:outline-none focus:ring-2 focus:ring-emerald-500/30 active:scale-[0.98]"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Cargar otro archivo
+              </button>
             )}
 
             <button

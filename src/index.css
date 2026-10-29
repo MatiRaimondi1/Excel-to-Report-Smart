@@ -11,3 +11,10 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
+@media print {
+  *, *::before, *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+}
