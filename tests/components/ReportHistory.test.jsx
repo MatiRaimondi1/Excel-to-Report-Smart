@@ -46,6 +46,79 @@ describe("Componente ReportHistory", () => {
     expect(screen.getByText(/50 filas/i)).toBeInTheDocument();
   });
 
+  it("debe permitir volver a descargar un reporte PDF previamente exportado desde el historial", () => {
+    const mockHistory = [
+      {
+        id: 101,
+        timestamp: "08/10/2026, 14:30:00",
+        fileName: "ventas_enero.xlsx",
+        title: "Reporte Mensual Enero",
+        theme: "indigo",
+        rowCount: 2,
+        colCount: 2,
+        columns: ["Producto", "Total"],
+        data: [
+          { Producto: "Notebook Pro", Total: 1200 },
+          { Producto: "Mouse USB", Total: 25 },
+        ],
+      },
+    ];
+
+    renderWithMockData(<ReportHistory />, { initialHistory: mockHistory });
+
+    const downloadButtons = screen.getAllByRole("button", {
+      name: /Volver a descargar/i,
+    });
+    expect(downloadButtons.length).toBeGreaterThanOrEqual(1);
+
+    fireEvent.click(downloadButtons[0]);
+
+    expect(window.print).toHaveBeenCalledTimes(1);
+
+    const printableArea = document.getElementById("pdf-printable-area");
+    expect(printableArea).toBeInTheDocument();
+    expect(printableArea).toHaveTextContent("Reporte Mensual Enero");
+    expect(printableArea).toHaveTextContent("Notebook Pro");
+    expect(printableArea).toHaveTextContent("Mouse USB");
+  });
+
+  it("debe abrir y cerrar la vista previa del reporte histórico y permitir descargarlo desde el modal", () => {
+    const mockHistory = [
+      {
+        id: 101,
+        timestamp: "08/10/2026, 14:30:00",
+        fileName: "ventas_enero.xlsx",
+        title: "Reporte Mensual Enero",
+        theme: "indigo",
+        rowCount: 2,
+        colCount: 2,
+        columns: ["Producto", "Total"],
+        data: [{ Producto: "Notebook Pro", Total: 1200 }],
+      },
+    ];
+
+    renderWithMockData(<ReportHistory />, { initialHistory: mockHistory });
+
+    const previewButton = screen.getByTitle(/Ver vista previa/i);
+    fireEvent.click(previewButton);
+
+    expect(
+      screen.getByText(/Vista Previa del Reporte Histórico/i),
+    ).toBeInTheDocument();
+
+    const modalDownloadBtn = screen.getByRole("button", {
+      name: /^Descargar PDF$/i,
+    });
+    fireEvent.click(modalDownloadBtn);
+    expect(window.print).toHaveBeenCalled();
+
+    const closeBtn = screen.getByLabelText(/Cerrar vista previa/i);
+    fireEvent.click(closeBtn);
+    expect(
+      screen.queryByText(/Vista Previa del Reporte Histórico/i),
+    ).not.toBeInTheDocument();
+  });
+
   it("debe permitir eliminar un reporte individual del historial", () => {
     const mockHistory = [
       {

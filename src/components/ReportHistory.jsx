@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { flushSync } from "react-dom";
 import { useData } from "../context/DataContext";
 import {
   History,
@@ -7,11 +8,137 @@ import {
   FileCheck,
   ChevronDown,
   ChevronUp,
+  Download,
+  Eye,
+  X,
+  BarChart3,
 } from "lucide-react";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+} from "recharts";
 
 export default function ReportHistory() {
-  const { reportHistory, clearHistory, deleteHistoryItem } = useData();
+  const { reportHistory, clearHistory, deleteHistoryItem, columns, processedData } =
+    useData();
   const [isOpen, setIsOpen] = useState(true);
+  const [previewItem, setPreviewItem] = useState(null);
+  const [printItem, setPrintItem] = useState(null);
+
+  const themeColors = {
+    indigo: {
+      primary: "bg-indigo-600",
+      primaryBg: "#4f46e5",
+      text: "text-indigo-600 dark:text-indigo-400",
+      border: "border-indigo-600 dark:border-indigo-500",
+      borderColor: "#4f46e5",
+      badge: "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300",
+      badgeBg: "#eef2ff",
+      badgeText: "#3730a3",
+      badgeBorder: "#c7d2fe",
+      chartColor: "#4f46e5",
+    },
+    emerald: {
+      primary: "bg-emerald-600",
+      primaryBg: "#059669",
+      text: "text-emerald-600 dark:text-emerald-400",
+      border: "border-emerald-600 dark:border-emerald-500",
+      borderColor: "#059669",
+      badge: "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300",
+      badgeBg: "#ecfdf5",
+      badgeText: "#065f46",
+      badgeBorder: "#a7f3d0",
+      chartColor: "#059669",
+    },
+    slate: {
+      primary: "bg-slate-800 dark:bg-zinc-800",
+      primaryBg: "#1e293b",
+      text: "text-slate-800 dark:text-zinc-200",
+      border: "border-slate-800 dark:border-zinc-700",
+      borderColor: "#1e293b",
+      badge: "bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300",
+      badgeBg: "#f1f5f9",
+      badgeText: "#1e293b",
+      badgeBorder: "#cbd5e1",
+      chartColor: "#334155",
+    },
+  };
+
+  const handleDownloadPdf = (item) => {
+    flushSync(() => {
+      setPrintItem(item);
+    });
+    window.print();
+  };
+
+  const targetPrintItem = printItem || previewItem;
+  const currentTheme =
+    targetPrintItem && themeColors[targetPrintItem.theme]
+      ? themeColors[targetPrintItem.theme]
+      : themeColors.emerald;
+
+  const itemColumns = useMemo(() => {
+    return targetPrintItem?.columns && targetPrintItem.columns.length > 0
+      ? targetPrintItem.columns
+      : columns && columns.length > 0
+        ? columns
+        : [];
+  }, [targetPrintItem, columns]);
+
+  const itemData = useMemo(() => {
+    return targetPrintItem?.data && targetPrintItem.data.length > 0
+      ? targetPrintItem.data
+      : processedData && processedData.length > 0
+        ? processedData.slice(0, targetPrintItem?.rowCount || 50)
+        : [];
+  }, [targetPrintItem, processedData]);
+
+  // Si chartData no vino en el historial o viene vacío, lo calculamos en vivo desde itemData
+  const chartDataToRender = useMemo(() => {
+    if (targetPrintItem?.chartData && targetPrintItem.chartData.length > 0) {
+      return targetPrintItem.chartData;
+    }
+    if (!itemData || itemData.length === 0) return [];
+
+    const catCol =
+      targetPrintItem?.categoryCol && itemColumns.includes(targetPrintItem.categoryCol)
+        ? targetPrintItem.categoryCol
+        : itemColumns[0] || "";
+
+    if (!catCol) return [];
+
+    const numCol =
+      targetPrintItem?.metricCol && itemColumns.includes(targetPrintItem.metricCol)
+        ? targetPrintItem.metricCol
+        : itemColumns.find((col) => {
+          const count = itemData.filter((row) => {
+            const val = row[col];
+            return val !== null && val !== undefined && val !== "" && !isNaN(Number(val));
+          }).length;
+          return count > itemData.length * 0.3;
+        }) || "";
+
+    const grouped = {};
+    itemData.forEach((row) => {
+      const cat = String(row[catCol] ?? "Sin Categoría").slice(0, 16);
+      const val = numCol ? Number(row[numCol]) || 0 : 1;
+      grouped[cat] = (grouped[cat] || 0) + val;
+    });
+
+    return Object.entries(grouped)
+      .map(([name, value]) => ({ name, value: Number(value.toFixed(2)) }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 8);
+  }, [targetPrintItem, itemData, itemColumns]);
+
+  const shouldRenderChart =
+    targetPrintItem &&
+    targetPrintItem.showChart !== false &&
+    chartDataToRender.length > 0;
 
   if (!reportHistory || reportHistory.length === 0) {
     return (
@@ -30,97 +157,691 @@ export default function ReportHistory() {
   }
 
   return (
-    <div className="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm overflow-hidden mb-6 no-print">
-      {/* Header Desplegable */}
-      <div
-        onClick={() => setIsOpen(!isOpen)}
-        className="p-4 bg-slate-50 dark:bg-zinc-900/90 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between cursor-pointer hover:bg-slate-100/80 dark:hover:bg-zinc-800/80 transition-colors"
-      >
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 rounded-lg">
-            <History className="w-5 h-5" />
+    <>
+      {/* CSS para forzar impresión exacta de colores y backgrounds en el PDF del historial */}
+      <style>{`
+        @media print {
+          @page {
+            size: auto;
+            margin: 12mm 15mm;
+          }
+          *, *::before, *::after {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+          }
+          body * {
+            visibility: hidden;
+          }
+          #pdf-printable-area, #pdf-printable-area * {
+            visibility: visible !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+          }
+          #pdf-printable-area {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 24px !important;
+            background-color: #ffffff !important;
+            color: #0f172a !important;
+            box-shadow: none !important;
+            border: none !important;
+            display: block !important;
+            opacity: 1 !important;
+            z-index: 99999 !important;
+          }
+          .no-print {
+            display: none !important;
+          }
+        }
+      `}</style>
+
+      {/* Contenedor Principal del Historial */}
+      <div className="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm overflow-hidden mb-6 no-print">
+        {/* Header Desplegable */}
+        <div
+          onClick={() => setIsOpen(!isOpen)}
+          className="p-4 bg-slate-50 dark:bg-zinc-900/90 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between cursor-pointer hover:bg-slate-100/80 dark:hover:bg-zinc-800/80 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 rounded-lg">
+              <History className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-slate-800 dark:text-zinc-100 text-sm">
+                Historial de Reportes Generados
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-zinc-400">
+                {reportHistory.length}{" "}
+                {reportHistory.length === 1
+                  ? "reporte exportado"
+                  : "reportes exportados"}{" "}
+                en este dispositivo
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="font-semibold text-slate-800 dark:text-zinc-100 text-sm">
-              Historial de Reportes Generados
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-zinc-400">
-              {reportHistory.length}{" "}
-              {reportHistory.length === 1
-                ? "reporte exportado"
-                : "reportes exportados"}{" "}
-              en este dispositivo
-            </p>
+
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-semibold px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 rounded-full">
+              {reportHistory.length}
+            </span>
+            {isOpen ? (
+              <ChevronUp className="w-4 h-4 text-slate-400 dark:text-zinc-500" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-slate-400 dark:text-zinc-500" />
+            )}
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-semibold px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 rounded-full">
-            {reportHistory.length}
-          </span>
-          {isOpen ? (
-            <ChevronUp className="w-4 h-4 text-slate-400 dark:text-zinc-500" />
-          ) : (
-            <ChevronDown className="w-4 h-4 text-slate-400 dark:text-zinc-500" />
-          )}
-        </div>
+        {isOpen && (
+          <div className="p-6 space-y-4">
+            <div className="flex justify-between items-center text-xs pb-2 border-b border-slate-100 dark:border-zinc-800">
+              <span className="text-slate-500 dark:text-zinc-400 font-medium">
+                Registro Local de Exportaciones (Listos para re-descargar)
+              </span>
+              <button
+                onClick={clearHistory}
+                className="inline-flex items-center gap-1 text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-300 font-medium transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Vaciar Historial
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {reportHistory.map((item) => (
+                <div
+                  key={item.id}
+                  className="p-4 bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 rounded-xl flex flex-col justify-between gap-3 hover:border-slate-300 dark:hover:border-zinc-700 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <FileCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                        <h4 className="font-semibold text-slate-800 dark:text-zinc-200 text-xs truncate max-w-[200px]">
+                          {item.title}
+                        </h4>
+                      </div>
+                      <p className="text-[11px] text-slate-500 dark:text-zinc-400 truncate">
+                        Archivo:{" "}
+                        <span className="font-medium text-slate-700 dark:text-zinc-300">
+                          {item.fileName}
+                        </span>
+                      </p>
+                      <div className="flex items-center gap-3 text-[10px] text-slate-400 dark:text-zinc-500 pt-1">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {item.timestamp}
+                        </span>
+                        <span>• {item.rowCount} filas</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={() => setPreviewItem(item)}
+                        className="p-1.5 text-slate-400 dark:text-zinc-500 hover:text-slate-700 dark:hover:text-zinc-200 hover:bg-slate-200/60 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                        title="Ver vista previa"
+                        aria-label="Ver vista previa"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => deleteHistoryItem(item.id)}
+                        className="p-1.5 text-slate-400 dark:text-zinc-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors"
+                        title="Eliminar del historial"
+                        aria-label="Eliminar del historial"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-200/60 dark:border-zinc-800/80 flex items-center justify-between">
+                    <span className="text-[10px] text-slate-400 dark:text-zinc-500 capitalize">
+                      Tema: {item.theme || "emerald"}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewItem(item)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg shadow-sm transition-colors"
+                      title="Volver a descargar PDF"
+                      aria-label="Volver a descargar PDF"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Volver a descargar</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
-      {isOpen && (
-        <div className="p-6 space-y-4">
-          <div className="flex justify-between items-center text-xs pb-2 border-b border-slate-100 dark:border-zinc-800">
-            <span className="text-slate-500 dark:text-zinc-400 font-medium">
-              Registro Local de Exportaciones
-            </span>
-            <button
-              onClick={clearHistory}
-              className="inline-flex items-center gap-1 text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-300 font-medium transition-colors"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              Vaciar Historial
-            </button>
-          </div>
+      {/* Modal de Vista Previa para Reportes del Historial (en pantalla) */}
+      {previewItem && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto no-print">
+          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
+            <div className="sticky top-0 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md px-6 py-4 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between z-10">
+              <div className="flex items-center gap-2">
+                <FileCheck className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                <h3 className="font-bold text-slate-900 dark:text-white text-base">
+                  Vista Previa del Reporte Histórico
+                </h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleDownloadPdf(previewItem)}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg shadow-sm transition-colors"
+                >
+                  <Download className="w-4 h-4" />
+                  Descargar PDF
+                </button>
+                <button
+                  onClick={() => setPreviewItem(null)}
+                  className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
+                  aria-label="Cerrar vista previa"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {reportHistory.map((item) => (
+            <div className="p-6">
+              {/* Documento Renderizado en Pantalla */}
               <div
-                key={item.id}
-                className="p-3.5 bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 rounded-xl flex items-start justify-between gap-3 hover:border-slate-300 dark:hover:border-zinc-700 transition-colors"
+                style={{ backgroundColor: "#ffffff", color: "#0f172a" }}
+                className="bg-white p-8 border border-slate-200 rounded-lg shadow-sm space-y-6 max-w-3xl mx-auto text-slate-900"
               >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <FileCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
-                    <h4 className="font-semibold text-slate-800 dark:text-zinc-200 text-xs truncate max-w-[200px]">
-                      {item.title}
-                    </h4>
+                <div
+                  style={{ borderBottom: `3px solid ${currentTheme.borderColor}` }}
+                  className="pb-4 flex justify-between items-start"
+                >
+                  <div>
+                    <h1 className="text-2xl font-bold text-slate-900">
+                      {previewItem.title}
+                    </h1>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Origen:{" "}
+                      <span className="font-semibold text-slate-700">
+                        {previewItem.fileName}
+                      </span>{" "}
+                      | Registro Histórico
+                    </p>
                   </div>
-                  <p className="text-[11px] text-slate-500 dark:text-zinc-400">
-                    Archivo:{" "}
-                    <span className="font-medium text-slate-700 dark:text-zinc-300">
-                      {item.fileName}
-                    </span>
-                  </p>
-                  <div className="flex items-center gap-3 text-[10px] text-slate-400 dark:text-zinc-500 pt-1">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
-                      {item.timestamp}
-                    </span>
-                    <span>• {item.rowCount} filas</span>
+                  <div className="text-right text-xs text-slate-500">
+                    <p>Fecha de emisión:</p>
+                    <p className="font-semibold text-slate-700">
+                      {previewItem.date || previewItem.timestamp}
+                    </p>
                   </div>
                 </div>
 
-                <button
-                  onClick={() => deleteHistoryItem(item.id)}
-                  className="p-1.5 text-slate-400 dark:text-zinc-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors"
-                  title="Eliminar del historial"
+                {previewItem.showKPIs !== false && (
+                  <div className="grid grid-cols-3 gap-4">
+                    <div
+                      style={{
+                        backgroundColor: currentTheme.badgeBg,
+                        borderColor: currentTheme.badgeBorder,
+                        color: currentTheme.badgeText,
+                      }}
+                      className="p-3.5 rounded-xl border shadow-xs"
+                    >
+                      <span
+                        style={{ color: currentTheme.badgeText }}
+                        className="text-xs font-semibold block uppercase tracking-wider"
+                      >
+                        Total Filas Procesadas
+                      </span>
+                      <span
+                        style={{ color: currentTheme.badgeText }}
+                        className="text-xl font-bold block mt-1"
+                      >
+                        {previewItem.rowCount}
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        backgroundColor: currentTheme.badgeBg,
+                        borderColor: currentTheme.badgeBorder,
+                        color: currentTheme.badgeText,
+                      }}
+                      className="p-3.5 rounded-xl border shadow-xs"
+                    >
+                      <span
+                        style={{ color: currentTheme.badgeText }}
+                        className="text-xs font-semibold block uppercase tracking-wider"
+                      >
+                        Columnas Presentes
+                      </span>
+                      <span
+                        style={{ color: currentTheme.badgeText }}
+                        className="text-xl font-bold block mt-1"
+                      >
+                        {itemColumns.length || previewItem.colCount || 0}
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        backgroundColor: currentTheme.badgeBg,
+                        borderColor: currentTheme.badgeBorder,
+                        color: currentTheme.badgeText,
+                      }}
+                      className="p-3.5 rounded-xl border shadow-xs"
+                    >
+                      <span
+                        style={{ color: currentTheme.badgeText }}
+                        className="text-xs font-semibold block uppercase tracking-wider"
+                      >
+                        Muestra Exportada
+                      </span>
+                      <span
+                        style={{ color: currentTheme.badgeText }}
+                        className="text-xl font-bold block mt-1"
+                      >
+                        {previewItem.rowCount} de {previewItem.rowCount}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {shouldRenderChart && (
+                  <div
+                    style={{ backgroundColor: "#f8fafc", borderColor: "#e2e8f0" }}
+                    className="border rounded-xl p-4"
+                  >
+                    <h3
+                      style={{ color: "#334155" }}
+                      className="text-xs font-bold uppercase tracking-wider mb-3 flex items-center gap-1.5"
+                    >
+                      <BarChart3 className="w-4 h-4 text-slate-600" />
+                      Resumen Gráfico Histórico
+                    </h3>
+                    <div className="w-full h-44 flex items-center justify-center">
+                      <ResponsiveContainer width="100%" height="100%" minWidth={300} minHeight={170}>
+                        <BarChart
+                          data={chartDataToRender}
+                          margin={{ top: 8, right: 10, left: -10, bottom: 25 }}
+                        >
+                          <CartesianGrid
+                            strokeDasharray="3 3"
+                            stroke="#cbd5e1"
+                            vertical={false}
+                          />
+                          <XAxis
+                            dataKey="name"
+                            stroke="#64748b"
+                            fontSize={9}
+                            interval={0}
+                            angle={-15}
+                            textAnchor="end"
+                          />
+                          <YAxis stroke="#64748b" fontSize={9} />
+                          <Bar
+                            dataKey="value"
+                            fill={currentTheme.chartColor || "#4f46e5"}
+                            radius={[3, 3, 0, 0]}
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <h3
+                    style={{ color: "#475569" }}
+                    className="text-xs font-bold uppercase tracking-wider mb-2"
+                  >
+                    Detalle de Registros
+                  </h3>
+                  <div className="overflow-x-auto rounded-lg border border-slate-200">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead style={{ backgroundColor: currentTheme.primaryBg, color: "#ffffff" }}>
+                        <tr
+                          style={{ backgroundColor: currentTheme.primaryBg, color: "#ffffff" }}
+                          className={`${currentTheme.primary} text-white`}
+                        >
+                          <th
+                            style={{
+                              backgroundColor: currentTheme.primaryBg,
+                              color: "#ffffff",
+                              borderColor: currentTheme.primaryBg,
+                            }}
+                            className="p-2 border font-semibold text-center w-12"
+                          >
+                            #
+                          </th>
+                          {itemColumns.map((col) => (
+                            <th
+                              key={col}
+                              style={{
+                                backgroundColor: currentTheme.primaryBg,
+                                color: "#ffffff",
+                                borderColor: currentTheme.primaryBg,
+                              }}
+                              className="p-2 border font-semibold"
+                            >
+                              {col}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {itemData.length > 0 ? (
+                          itemData.map((row, idx) => (
+                            <tr
+                              key={idx}
+                              style={{
+                                backgroundColor: idx % 2 === 0 ? "#ffffff" : "#f1f5f9",
+                              }}
+                              className={idx % 2 === 0 ? "bg-white" : "bg-slate-50"}
+                            >
+                              <td
+                                style={{ borderColor: "#cbd5e1", color: "#64748b" }}
+                                className="p-2 border font-mono text-center"
+                              >
+                                {idx + 1}
+                              </td>
+                              {itemColumns.map((col) => (
+                                <td
+                                  key={col}
+                                  style={{ borderColor: "#cbd5e1", color: "#1e293b" }}
+                                  className="p-2 border font-medium"
+                                >
+                                  {row[col] !== undefined && row[col] !== null
+                                    ? String(row[col])
+                                    : "-"}
+                                </td>
+                              ))}
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td
+                              colSpan={Math.max(itemColumns.length + 1, 1)}
+                              className="p-4 text-center text-slate-400 italic"
+                            >
+                              Detalle de registros archivado según el reporte original ({previewItem.rowCount} filas).
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div
+                  style={{ borderTopColor: "#e2e8f0" }}
+                  className="border-t pt-4 flex justify-between items-center text-[10px] text-slate-400"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
+                  <span>
+                    Excel-to-PDF Smart Converter — Documento histórico emitido el {previewItem.date || previewItem.timestamp}
+                  </span>
+                  <span>Página 1</span>
+                </div>
               </div>
-            ))}
+            </div>
           </div>
         </div>
       )}
-    </div>
+
+      {/* Documento Imprimible del Historial (Renderizado fuera de pantalla para calcular layout y SVG con precisión) */}
+      {targetPrintItem && (
+        <div
+          id="pdf-printable-area"
+          className="bg-white p-8 border border-slate-200 rounded-lg space-y-6 max-w-4xl mx-auto text-slate-900"
+          style={{
+            position: "fixed",
+            left: "-9999px",
+            top: 0,
+            width: "800px",
+            backgroundColor: "#ffffff",
+            color: "#0f172a",
+            opacity: 0,
+            pointerEvents: "none",
+            zIndex: -9999,
+          }}
+        >
+          {/* Encabezado del PDF */}
+          <div
+            style={{ borderBottom: `3px solid ${currentTheme.borderColor}` }}
+            className="pb-4 flex justify-between items-start"
+          >
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900">
+                {targetPrintItem.title}
+              </h1>
+              <p className="text-xs text-slate-500 mt-1">
+                Origen:{" "}
+                <span className="font-semibold text-slate-700">
+                  {targetPrintItem.fileName}
+                </span>{" "}
+                | Reimpresión de Reporte Histórico
+              </p>
+            </div>
+            <div className="text-right text-xs text-slate-500">
+              <p>Fecha de emisión original:</p>
+              <p className="font-semibold text-slate-700">
+                {targetPrintItem.date || targetPrintItem.timestamp}
+              </p>
+            </div>
+          </div>
+
+          {/* Indicadores en el PDF */}
+          {targetPrintItem.showKPIs !== false && (
+            <div className="grid grid-cols-3 gap-4">
+              <div
+                style={{
+                  backgroundColor: currentTheme.badgeBg,
+                  borderColor: currentTheme.badgeBorder,
+                  color: currentTheme.badgeText,
+                }}
+                className="p-3.5 rounded-xl border shadow-xs"
+              >
+                <span
+                  style={{ color: currentTheme.badgeText }}
+                  className="text-xs font-semibold block uppercase tracking-wider"
+                >
+                  Total Filas Procesadas
+                </span>
+                <span
+                  style={{ color: currentTheme.badgeText }}
+                  className="text-xl font-bold block mt-1"
+                >
+                  {targetPrintItem.rowCount}
+                </span>
+              </div>
+              <div
+                style={{
+                  backgroundColor: currentTheme.badgeBg,
+                  borderColor: currentTheme.badgeBorder,
+                  color: currentTheme.badgeText,
+                }}
+                className="p-3.5 rounded-xl border shadow-xs"
+              >
+                <span
+                  style={{ color: currentTheme.badgeText }}
+                  className="text-xs font-semibold block uppercase tracking-wider"
+                >
+                  Columnas Presentes
+                </span>
+                <span
+                  style={{ color: currentTheme.badgeText }}
+                  className="text-xl font-bold block mt-1"
+                >
+                  {itemColumns.length || targetPrintItem.colCount || 0}
+                </span>
+              </div>
+              <div
+                style={{
+                  backgroundColor: currentTheme.badgeBg,
+                  borderColor: currentTheme.badgeBorder,
+                  color: currentTheme.badgeText,
+                }}
+                className="p-3.5 rounded-xl border shadow-xs"
+              >
+                <span
+                  style={{ color: currentTheme.badgeText }}
+                  className="text-xs font-semibold block uppercase tracking-wider"
+                >
+                  Muestra Exportada
+                </span>
+                <span
+                  style={{ color: currentTheme.badgeText }}
+                  className="text-xl font-bold block mt-1"
+                >
+                  {targetPrintItem.rowCount} de {targetPrintItem.rowCount}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Gráfico Visual en el PDF (Con dimensiones explícitas para garantizar renderizado SVG en print) */}
+          {shouldRenderChart && (
+            <div
+              style={{ backgroundColor: "#f8fafc", borderColor: "#e2e8f0" }}
+              className="border rounded-xl p-4"
+            >
+              <h3
+                style={{ color: "#334155" }}
+                className="text-xs font-bold uppercase tracking-wider mb-3 flex items-center gap-1.5"
+              >
+                <BarChart3 className="w-4 h-4 text-slate-600" />
+                Resumen Gráfico Histórico
+              </h3>
+              <div className="w-full h-44 flex items-center justify-center">
+                <ResponsiveContainer width="100%" height="100%" minWidth={300} minHeight={170}>
+                  <BarChart
+                    data={chartDataToRender}
+                    margin={{ top: 8, right: 10, left: -10, bottom: 25 }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="#cbd5e1"
+                      vertical={false}
+                    />
+                    <XAxis
+                      dataKey="name"
+                      stroke="#64748b"
+                      fontSize={9}
+                      interval={0}
+                      angle={-15}
+                      textAnchor="end"
+                    />
+                    <YAxis stroke="#64748b" fontSize={9} />
+                    <Bar
+                      dataKey="value"
+                      fill={currentTheme.chartColor || "#4f46e5"}
+                      radius={[3, 3, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+
+          {/* Tabla de Contenido del PDF */}
+          <div>
+            <h3
+              style={{ color: "#475569" }}
+              className="text-xs font-bold uppercase tracking-wider mb-2"
+            >
+              Detalle de Registros
+            </h3>
+            <div className="overflow-x-auto rounded-lg border border-slate-200">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead style={{ backgroundColor: currentTheme.primaryBg, color: "#ffffff" }}>
+                  <tr
+                    style={{ backgroundColor: currentTheme.primaryBg, color: "#ffffff" }}
+                    className={`${currentTheme.primary} text-white`}
+                  >
+                    <th
+                      style={{
+                        backgroundColor: currentTheme.primaryBg,
+                        color: "#ffffff",
+                        borderColor: currentTheme.primaryBg,
+                      }}
+                      className="p-2 border font-semibold text-center w-12"
+                    >
+                      #
+                    </th>
+                    {itemColumns.map((col) => (
+                      <th
+                        key={col}
+                        style={{
+                          backgroundColor: currentTheme.primaryBg,
+                          color: "#ffffff",
+                          borderColor: currentTheme.primaryBg,
+                        }}
+                        className="p-2 border font-semibold"
+                      >
+                        {col}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {itemData.length > 0 ? (
+                    itemData.map((row, idx) => (
+                      <tr
+                        key={idx}
+                        style={{
+                          backgroundColor: idx % 2 === 0 ? "#ffffff" : "#f1f5f9",
+                        }}
+                        className={idx % 2 === 0 ? "bg-white" : "bg-slate-50"}
+                      >
+                        <td
+                          style={{ borderColor: "#cbd5e1", color: "#64748b" }}
+                          className="p-2 border font-mono text-center"
+                        >
+                          {idx + 1}
+                        </td>
+                        {itemColumns.map((col) => (
+                          <td
+                            key={col}
+                            style={{ borderColor: "#cbd5e1", color: "#1e293b" }}
+                            className="p-2 border font-medium"
+                          >
+                            {row[col] !== undefined && row[col] !== null
+                              ? String(row[col])
+                              : "-"}
+                          </td>
+                        ))}
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan={Math.max(itemColumns.length + 1, 1)}
+                        className="p-4 text-center text-slate-400 italic"
+                      >
+                        Detalle de registros archivado según el reporte original ({targetPrintItem.rowCount} filas).
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Pie de Página del PDF */}
+          <div
+            style={{ borderTopColor: "#e2e8f0" }}
+            className="border-t pt-4 flex justify-between items-center text-[10px] text-slate-400"
+          >
+            <span>
+              Excel-to-PDF Smart Converter — Reimpresión de documento archivado el {targetPrintItem.date || targetPrintItem.timestamp}
+            </span>
+            <span>Página 1</span>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
