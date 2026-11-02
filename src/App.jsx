@@ -33,10 +33,10 @@ export function MainContent() {
               <FileSpreadsheet className="h-5 w-5" />
             </div>
 
-            <div className="min-w-0 select-none" aria-label="PDF to Report Smart Converter">
+            <div className="min-w-0 select-none" aria-label="Excel to Report Smart">
               <h1 className="truncate text-[14px] font-extrabold leading-tight tracking-[-0.03em] text-slate-900 dark:text-white sm:text-base">
-                <span className="text-emerald-700 dark:text-emerald-400">PDF to Report</span>{" "}
-                <span className="font-semibold tracking-tight text-slate-700 dark:text-zinc-200">Smart Converter</span>
+                <span className="text-emerald-700 dark:text-emerald-400">Excel to Report</span>{" "}
+                <span className="font-semibold tracking-tight text-slate-700 dark:text-zinc-200">Smart</span>
               </h1>
 
               <p className="hidden max-w-md truncate pt-0.5 text-xs font-medium tracking-wide text-slate-500 dark:text-zinc-400 sm:block">
