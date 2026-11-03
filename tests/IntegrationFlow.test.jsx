@@ -10,7 +10,7 @@ describe("Flujo Funcional de Integración (End-to-End)", () => {
     async () => {
       renderWithRealProvider(<App />);
 
-      expect(screen.getByText("Excel-to-PDF")).toBeInTheDocument();
+      expect(screen.getByText("Excel to Report")).toBeInTheDocument();
       expect(screen.getByText("Crear un nuevo reporte")).toBeInTheDocument();
       expect(screen.getByText(/Arrastra tu archivo Excel aquí/i)).toBeInTheDocument();
 

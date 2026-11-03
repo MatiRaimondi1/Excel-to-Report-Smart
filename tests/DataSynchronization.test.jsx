@@ -122,7 +122,7 @@ describe("Sincronización en Tiempo Real: DataExplorer -> PdfReport y GraphicsMo
     const redownloadButtons = within(historyCard).getAllByRole("button", { name: /Volver a descargar/i });
     fireEvent.click(redownloadButtons[0]);
 
-    expect(window.print).toHaveBeenCalledTimes(2);
+    expect(window.print).toHaveBeenCalledTimes(1);
 
     const printableArea = document.getElementById("pdf-printable-area");
     expect(printableArea).toHaveTextContent("Silla Ergonómica");

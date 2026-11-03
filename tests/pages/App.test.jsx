@@ -7,7 +7,7 @@ describe("Aplicación Principal (App)", () => {
   it("debe renderizar la pantalla inicial con FileUpload cuando no hay datos cargados", () => {
     render(<App />);
 
-    expect(screen.getByText("Excel-to-PDF")).toBeInTheDocument();
+    expect(screen.getByText("Excel to Report")).toBeInTheDocument();
     expect(
       screen.getByText("Convierte tus planillas en reportes profesionales"),
     ).toBeInTheDocument();
