@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Home</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Home</h1>
+
+    
+
+
+
+    
+
+
+    <h3> </h3>
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+    <section>
+        <article><h1>📊 Excel-to-Report Smart</h1>
+<blockquote>
+<p>Convierte tus planillas Excel en reportes profesionales PDF — todo desde el navegador, sin backend.</p>
+</blockquote>
+<p><a href="https://react.dev/"><img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&amp;logoColor=white" alt="React"></a>
+<a href="https://vite.dev/"><img src="https://img.shields.io/badge/Vite-8-646CFF?logo=vite&amp;logoColor=white" alt="Vite"></a>
+<a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&amp;logoColor=white" alt="Tailwind CSS"></a>
+<a href="./LICENSE"><img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License: GPL v3"></a></p>
+<p><img src="repo/preview.png" alt="Preview"></p>
+<hr>
+<h2>✨ Características Principales</h2>
+<table>
+<thead>
+<tr>
+<th>Módulo</th>
+<th>Descripción</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>📁 <strong>Carga de Archivos</strong></td>
+<td>Arrastra o selecciona archivos <code>.xlsx</code> / <code>.xls</code> con validación automática</td>
+</tr>
+<tr>
+<td>🔍 <strong>Explorador de Datos</strong></td>
+<td>Tabla paginada con búsqueda global, filtro por columna y ordenación</td>
+</tr>
+<tr>
+<td>✅ <strong>Calidad de Datos</strong></td>
+<td>Diagnóstico automático: score de salud, detección de nulos/duplicados, limpieza integrada</td>
+</tr>
+<tr>
+<td>📈 <strong>Análisis Estadístico</strong></td>
+<td>KPIs automáticos (suma, promedio, min, max) y gráfico de barras Top 10</td>
+</tr>
+<tr>
+<td>🎨 <strong>Gráficos Interactivos</strong></td>
+<td>7 tipos de gráfico (Recharts), 5 paletas de colores, agregaciones, exportación PNG en alta resolución</td>
+</tr>
+<tr>
+<td>📄 <strong>Reporte PDF</strong></td>
+<td>Generación de PDF profesional con KPIs, gráficos, tabla de datos y 3 temas visuales</td>
+</tr>
+<tr>
+<td>📚 <strong>Historial</strong></td>
+<td>Gestión completa de reportes pasados con previsualización y re-descarga</td>
+</tr>
+<tr>
+<td>🌗 <strong>Tema Claro/Oscuro</strong></td>
+<td>Alternancia con detección automática del sistema operativo</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>🚀 Inicio Rápido</h2>
+<h3>Prerrequisitos</h3>
+<ul>
+<li><a href="https://nodejs.org/">Node.js</a> 18+ (recomendado: 20+)</li>
+<li>npm (incluido con Node.js)</li>
+</ul>
+<h3>Instalación</h3>
+<pre class="prettyprint source lang-bash"><code># Clonar el repositorio
+git clone https://github.com/MatiRaimondi1/Excel-to-Report-Smart.git
+cd Excel-to-Report-Smart
+
+# Instalar dependencias
+npm install
+
+# Iniciar servidor de desarrollo
+npm run dev
+</code></pre>
+<p>La aplicación estará disponible en <code>http://localhost:5173</code>.</p>
+<h3>Scripts Disponibles</h3>
+<table>
+<thead>
+<tr>
+<th>Comando</th>
+<th>Descripción</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>npm run dev</code></td>
+<td>Inicia el servidor de desarrollo con HMR</td>
+</tr>
+<tr>
+<td><code>npm run build</code></td>
+<td>Genera la build de producción en <code>dist/</code></td>
+</tr>
+<tr>
+<td><code>npm run preview</code></td>
+<td>Previsualiza la build de producción</td>
+</tr>
+<tr>
+<td><code>npm run lint</code></td>
+<td>Ejecuta ESLint sobre el proyecto</td>
+</tr>
+<tr>
+<td><code>npm run test</code></td>
+<td>Ejecuta los tests una vez</td>
+</tr>
+<tr>
+<td><code>npm run test:watch</code></td>
+<td>Ejecuta los tests en modo watch</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>🏗️ Arquitectura</h2>
+<h3>Stack Tecnológico</h3>
+<table>
+<thead>
+<tr>
+<th>Categoría</th>
+<th>Tecnología</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Framework</strong></td>
+<td>React 19</td>
+</tr>
+<tr>
+<td><strong>Bundler</strong></td>
+<td>Vite 8</td>
+</tr>
+<tr>
+<td><strong>Estilos</strong></td>
+<td>Tailwind CSS 4</td>
+</tr>
+<tr>
+<td><strong>Gráficos</strong></td>
+<td>Recharts 3</td>
+</tr>
+<tr>
+<td><strong>Parseo Excel</strong></td>
+<td>SheetJS (xlsx)</td>
+</tr>
+<tr>
+<td><strong>Iconos</strong></td>
+<td>Lucide React</td>
+</tr>
+<tr>
+<td><strong>Fechas</strong></td>
+<td>date-fns</td>
+</tr>
+<tr>
+<td><strong>Routing</strong></td>
+<td>React Router DOM 7</td>
+</tr>
+<tr>
+<td><strong>Testing</strong></td>
+<td>Vitest 5 + Testing Library</td>
+</tr>
+</tbody>
+</table>
+<h3>Estructura del Proyecto</h3>
+<pre class="prettyprint source"><code>Excel-to-Report-Smart/
+├── public/                     # Archivos estáticos
+│   ├── favicon.svg
+│   └── icons.svg
+├── src/
+│   ├── main.jsx                # Punto de entrada
+│   ├── App.jsx                 # Componente raíz y navegación
+│   ├── index.css               # Estilos globales
+│   ├── assets/                 # Imágenes y recursos
+│   ├── components/
+│   │   ├── FileUpload.jsx      # Carga de archivos (drag & drop)
+│   │   ├── DataExplorer.jsx    # Tabla interactiva de datos
+│   │   ├── DataQuality.jsx     # Diagnóstico y limpieza de datos
+│   │   ├── DataAnalysis.jsx    # KPIs y análisis estadístico
+│   │   ├── GraphicsModule.jsx  # Gráficos interactivos (Recharts)
+│   │   ├── PdfReport.jsx       # Configuración y generación de PDF
+│   │   └── ReportHistory.jsx   # Historial de reportes
+│   └── context/
+│       ├── DataContext.jsx     # Estado global de datos
+│       └── ThemeContext.jsx    # Estado del tema (claro/oscuro)
+├── tests/
+│   ├── setup.jsx               # Configuración de Vitest
+│   ├── test-utils.jsx          # Utilidades de testing
+│   ├── DataSynchronization.test.jsx
+│   ├── IntegrationFlow.test.jsx
+│   ├── components/             # Tests unitarios por componente
+│   │   ├── DataAnalysis.test.jsx
+│   │   ├── DataExplorer.test.jsx
+│   │   ├── DataQuality.test.jsx
+│   │   ├── FileUpload.test.jsx
+│   │   ├── GraphicsModule.test.jsx
+│   │   ├── PdfReport.test.jsx
+│   │   └── ReportHistory.test.jsx
+│   ├── context/                # Tests de contextos
+│   │   ├── DataContext.test.jsx
+│   │   └── ThemeContext.test.jsx
+│   └── pages/
+│       └── App.test.jsx
+├── docs/                       # Documentación
+|   ├── JSDoc                          # Documentación técnica
+│   └── Diagrama de casos de uso.svg   # Diagrama UML de casos de uso
+├── package.json
+├── vite.config.js
+├── eslint.config.js
+└── LICENSE                     # GPL v3
+</code></pre>
+<hr>
+<h2>📋 Módulos en Detalle</h2>
+<h3>📁 Carga de Archivos</h3>
+<ul>
+<li><strong>Drag &amp; drop</strong> o selección desde el explorador de archivos</li>
+<li>Formatos soportados: <code>.xlsx</code>, <code>.xls</code></li>
+<li>Parseo automático de la primera hoja del libro Excel vía SheetJS</li>
+<li>Validación de formato al seleccionar el archivo</li>
+</ul>
+<h3>🔍 Explorador de Datos</h3>
+<ul>
+<li>Tabla paginada con header sticky y scroll horizontal</li>
+<li><strong>Búsqueda global</strong> de texto en todas las columnas</li>
+<li><strong>Filtro por columna</strong> específica con substring match</li>
+<li><strong>Ordenación</strong> ascendente/descendente por click en encabezado</li>
+<li>Paginación configurable: 10, 25, 50 o 100 filas por página</li>
+<li>Botón para resetear todos los filtros</li>
+</ul>
+<h3>✅ Calidad de Datos</h3>
+<ul>
+<li><strong>Score de salud</strong> automático (0-100%) con código de color</li>
+<li>Detección de <strong>filas duplicadas</strong> y <strong>celdas vacías/nulas</strong></li>
+<li>Herramientas de limpieza integradas:
+<ul>
+<li>Eliminar filas duplicadas</li>
+<li>Rellenar celdas vacías con &quot;N/A&quot;</li>
+<li>Limpiar espacios en blanco (trim)</li>
+</ul>
+</li>
+<li>Posibilidad de <strong>restaurar datos originales</strong> en cualquier momento</li>
+</ul>
+<h3>📈 Análisis Estadístico</h3>
+<ul>
+<li>Detección automática de columnas numéricas</li>
+<li><strong>4 tarjetas KPI</strong>: Suma Total, Promedio, Mínimo, Máximo</li>
+<li>Gráfico de barras con las <strong>Top 10 categorías</strong></li>
+<li>Selección de columna de métrica y ejes del gráfico</li>
+</ul>
+<h3>🎨 Gráficos Interactivos</h3>
+<ul>
+<li><strong>7 tipos de gráfico</strong>: Barras, Barras Horizontales, Líneas, Área, Pastel, Dona, Compuesto (barras + líneas)</li>
+<li><strong>5 funciones de agregación</strong>: Suma, Promedio, Conteo, Máximo, Mínimo</li>
+<li><strong>5 paletas de colores</strong>: Esmeralda, Índigo Ejecutivo, Océano Cyan, Atardecer Cálido, Multicolor Vibrante</li>
+<li>Configuración de Top N (5, 10, 15, 20, Todos) y orden</li>
+<li>Métrica secundaria opcional para comparación dual</li>
+<li>Toggle de cuadrícula y leyenda</li>
+<li><strong>Exportación PNG</strong> en alta resolución (2x)</li>
+<li>4 KPIs del gráfico: Total Agregado, Promedio por Categoría, Líder, Categorías</li>
+</ul>
+<h3>📄 Reporte PDF</h3>
+<ul>
+<li><strong>3 temas visuales</strong>: Corporativo (Índigo), Financiero (Esmeralda), Formal (Pizarra)</li>
+<li>Configuración de título personalizado</li>
+<li>Secciones opcionales: KPIs y gráfico</li>
+<li>Máximo de filas configurable: 20, 50, 100 o todas</li>
+<li><strong>Previsualización en tiempo real</strong> antes de exportar</li>
+<li>Generación vía <code>window.print()</code> con CSS de impresión optimizado</li>
+<li>Guardado automático en historial al exportar</li>
+</ul>
+<h3>📚 Historial de Reportes</h3>
+<ul>
+<li>Lista visual con tarjetas de reportes pasados</li>
+<li><strong>Previsualización</strong> completa en modal</li>
+<li><strong>Re-descarga</strong> de reportes históricos como PDF</li>
+<li>Eliminación individual o limpieza completa del historial</li>
+<li>Persistencia en <strong>localStorage</strong> del navegador</li>
+</ul>
+<hr>
+<h2>🧪 Testing</h2>
+<p>El proyecto incluye una suite completa de tests con <strong>Vitest</strong> y <strong>React Testing Library</strong>:</p>
+<pre class="prettyprint source lang-bash"><code># Ejecutar todos los tests
+npm run test
+
+# Ejecutar en modo watch
+npm run test:watch
+</code></pre>
+<h3>Cobertura de Tests</h3>
+<table>
+<thead>
+<tr>
+<th>Tipo</th>
+<th>Archivos</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Componentes</strong></td>
+<td>FileUpload, DataExplorer, DataQuality, DataAnalysis, GraphicsModule, PdfReport, ReportHistory</td>
+</tr>
+<tr>
+<td><strong>Contextos</strong></td>
+<td>DataContext, ThemeContext</td>
+</tr>
+<tr>
+<td><strong>Integración</strong></td>
+<td>IntegrationFlow, DataSynchronization</td>
+</tr>
+<tr>
+<td><strong>Páginas</strong></td>
+<td>App</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>🔧 Configuración</h2>
+<h3>Vite</h3>
+<p>La configuración de Vite se encuentra en <a href="./vite.config.js"><code>vite.config.js</code></a>:</p>
+<ul>
+<li>Plugin React con Oxc</li>
+<li>Plugin Tailwind CSS v4</li>
+<li>Vitest integrado con jsdom</li>
+</ul>
+<h3>ESLint</h3>
+<p>Configuración en <a href="./eslint.config.js"><code>eslint.config.js</code></a> con reglas para React Hooks y React Refresh.</p>
+<hr>
+<h2>📄 Licencia</h2>
+<p>Este proyecto está licenciado bajo la <a href="./LICENSE">GNU General Public License v3.0</a>.</p></article>
+    </section>
+
+
+
+
+
+
+
+
+
+<section>
+
+<header>
+    
+        <h2>App.jsx</h2>
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+            <div class="description">Componente raíz y contenedor principal de la aplicación Excel to Report Smart.
+Estructura el encabezado, navegación entre creación de reportes e historial, conmutador de tema,
+y renderizado condicional de la suite de herramientas analíticas.</div>
+        
+
+        
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="App.jsx.html">App.jsx</a>, <a href="App.jsx.html#line1">line 1</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+        
+    
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+
+
+
+<section>
+
+<header>
+    
+        <h2>components/DataAnalysis.jsx</h2>
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+            <div class="description">Componente de resumen analítico e indicadores clave de rendimiento (KPIs).
+Identifica de forma autónoma columnas con valores numéricos continuos, computa estadísticas descriptivas
+fundamentales (suma, media, mínimos y máximos) y renderiza una gráfica preliminar interactiva con Recharts.</div>
+        
+
+        
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="components_DataAnalysis.jsx.html">components/DataAnalysis.jsx</a>, <a href="components_DataAnalysis.jsx.html#line1">line 1</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+        
+    
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+
+
+
+<section>
+
+<header>
+    
+        <h2>components/DataExplorer.jsx</h2>
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+            <div class="description">Componente interactivo para exploración, búsqueda global, filtrado por columna,
+ordenamiento inteligente (numérico o alfabético) y paginación configurable de los datos cargados.
+Se sincroniza bidireccionalmente con el `DataContext` para propagar los filtros a los gráficos y reportes.</div>
+        
+
+        
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="components_DataExplorer.jsx.html">components/DataExplorer.jsx</a>, <a href="components_DataExplorer.jsx.html#line1">line 1</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+        
+    
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+
+
+
+<section>
+
+<header>
+    
+        <h2>components/DataQuality.jsx</h2>
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+            <div class="description">Componente para diagnóstico y saneamiento de la calidad de datos tabulares.
+Evalúa automáticamente la presencia de registros duplicados y celdas nulas o vacías,
+computa un puntaje de salud porcentual y ofrece acciones inmediatas de limpieza y normalización.</div>
+        
+
+        
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="components_DataQuality.jsx.html">components/DataQuality.jsx</a>, <a href="components_DataQuality.jsx.html#line1">line 1</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+        
+    
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+
+
+
+<section>
+
+<header>
+    
+        <h2>components/FileUpload.jsx</h2>
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+            <div class="description">Componente para la carga interactiva de archivos Excel (.xlsx/.xls).
+Permite la selección mediante explorador de archivos o arrastrar y soltar (drag & drop),
+con retroalimentación visual de estado de carga, accesibilidad por teclado y control de errores.</div>
+        
+
+        
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="components_FileUpload.jsx.html">components/FileUpload.jsx</a>, <a href="components_FileUpload.jsx.html#line1">line 1</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+        
+    
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+
+
+
+<section>
+
+<header>
+    
+        <h2>components/GraphicsModule.jsx</h2>
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+            <div class="description">Módulo de visualización gráfica interactiva construido sobre Recharts.
+Soporta 7 tipologías de gráficos (barras verticales, barras horizontales, líneas, áreas, pastel,
+dona y compuesto), 5 tipos de agregación métrica (suma, promedio, conteo, máximo y mínimo),
+múltiples paletas cromáticas accesibles, sincronización en tiempo real con los filtros globales
+y exportación del SVG vectorial a imagen PNG en alta definición (resolución 2x).</div>
+        
+
+        
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="components_GraphicsModule.jsx.html">components/GraphicsModule.jsx</a>, <a href="components_GraphicsModule.jsx.html#line1">line 1</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+        
+    
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+
+
+
+<section>
+
+<header>
+    
+        <h2>components/PdfReport.jsx</h2>
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+            <div class="description">Componente para diseño, previsualización interactiva y generación de reportes ejecutivos en PDF.
+Aplica estilos especializados para medios de impresión (`@media print`), personalización temática corporativa
+(índigo, esmeralda y pizarra), inclusión selectiva de KPIs y gráficos, y persistencia automática en el historial.</div>
+        
+
+        
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="components_PdfReport.jsx.html">components/PdfReport.jsx</a>, <a href="components_PdfReport.jsx.html#line1">line 1</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+        
+    
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+
+
+
+<section>
+
+<header>
+    
+        <h2>components/ReportHistory.jsx</h2>
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+            <div class="description">Componente para consulta, administración y reimpresión de reportes históricos.
+Muestra las instancias generadas con persistencia en `localStorage`, permitiendo visualizar
+una vista previa modal completa, regenerar el archivo PDF o eliminar elementos del archivo.</div>
+        
+
+        
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="components_ReportHistory.jsx.html">components/ReportHistory.jsx</a>, <a href="components_ReportHistory.jsx.html#line1">line 1</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+        
+    
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+
+
+
+<section>
+
+<header>
+    
+        <h2>context/DataContext.jsx</h2>
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+            <div class="description">Contexto global principal para la gestión de datos tabulares procedentes de archivos
+Excel (.xlsx/.xls), operaciones de filtrado, ordenamiento sincronizado y persistencia del historial
+de reportes generados en `localStorage`.</div>
+        
+
+        
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="context_DataContext.jsx.html">context/DataContext.jsx</a>, <a href="context_DataContext.jsx.html#line1">line 1</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+        
+    
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+
+
+
+<section>
+
+<header>
+    
+        <h2>context/ThemeContext.jsx</h2>
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+            <div class="description">Contexto global y proveedor para la gestión del tema visual (claro / oscuro).
+Provee persistencia en `localStorage`, detección automática de preferencias del sistema
+operativo mediante `matchMedia`, y manipulación reactiva de la clase `.dark` en el elemento raíz del DOM (`<html>`).</div>
+        
+
+        
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="context_ThemeContext.jsx.html">context/ThemeContext.jsx</a>, <a href="context_ThemeContext.jsx.html#line1">line 1</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+        
+    
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+
+
+
+<section>
+
+<header>
+    
+        <h2>main.jsx</h2>
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+            <div class="description">Punto de entrada principal de la aplicación Excel to Report Smart.
+Inicializa el árbol de React mediante `createRoot` y renderiza el componente raíz `<App />`
+en modo estricto (`<StrictMode>`).</div>
+        
+
+        
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="main.jsx.html">main.jsx</a>, <a href="main.jsx.html#line1">line 1</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+        
+    
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#COLOR_PALETTES">COLOR_PALETTES</a></li><li><a href="global.html#DataContext">DataContext</a></li><li><a href="global.html#DataProvider">DataProvider</a></li><li><a href="global.html#MainContent">MainContent</a></li><li><a href="global.html#ThemeContext">ThemeContext</a></li><li><a href="global.html#ThemeProvider">ThemeProvider</a></li><li><a href="global.html#applyThemeToDOM">applyThemeToDOM</a></li><li><a href="global.html#useData">useData</a></li><li><a href="global.html#useTheme">useTheme</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Mon Nov 09 2026 11:11:06 GMT-0300 (Argentina Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

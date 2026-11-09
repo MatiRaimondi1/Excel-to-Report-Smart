@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: components/DataAnalysis.jsx</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: components/DataAnalysis.jsx</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @file DataAnalysis.jsx
+ * @description Componente de resumen analítico e indicadores clave de rendimiento (KPIs).
+ * Identifica de forma autónoma columnas con valores numéricos continuos, computa estadísticas descriptivas
+ * fundamentales (suma, media, mínimos y máximos) y renderiza una gráfica preliminar interactiva con Recharts.
+ */
+
+import { useState, useMemo } from "react";
+import { useData } from "../context/DataContext";
+import { useTheme } from "../context/ThemeContext";
+import {
+  BarChart3,
+  Calculator,
+  PieChart as PieChartIcon,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+} from "recharts";
+
+/**
+ * @typedef {Object} KPIStats
+ * Indicadores clave de rendimiento calculados para la columna numérica seleccionada.
+ * @property {string|number} sum - Suma total formateada con separador de miles.
+ * @property {string|number} avg - Media aritmética calculada sobre valores válidos.
+ * @property {string|number} min - Valor numérico mínimo encontrado.
+ * @property {string|number} max - Valor numérico máximo encontrado.
+ * @property {number} count - Total de filas con valores numéricos computables.
+ */
+
+/**
+ * @typedef {Object} ChartDataPoint
+ * Punto de datos para la gráfica de barras rápida de análisis.
+ * @property {string} name - Etiqueta representativa de la categoría en el eje X.
+ * @property {number} value - Sumatoria acumulada para la métrica seleccionada en el eje Y.
+ */
+
+/**
+ * Componente que muestra las tarjetas de indicadores numéricos y una visualización gráfica resumida.
+ *
+ * @component
+ * @returns {JSX.Element|null} Panel analítico con KPIs y gráfico de barras, o `null` si no hay datos.
+ */
+export default function DataAnalysis() {
+  const { processedData, filteredData, columns } = useData();
+  const { isDark } = useTheme();
+  const [isOpen, setIsOpen] = useState(true);
+
+  /**
+   * Datos activos sincronizados con los filtros de búsqueda y ordenamiento de DataExplorer.
+   */
+  const currentData = useMemo(() => {
+    return filteredData !== null &amp;&amp; filteredData !== undefined
+      ? filteredData
+      : processedData || [];
+  }, [filteredData, processedData]);
+
+  /**
+   * Detección heurística de columnas numéricas continuas (aquellas donde más del 50% de filas son números válidos).
+   *
+   * @type {string[]}
+   */
+  const numericColumns = useMemo(() => {
+    if (!currentData || currentData.length === 0) return [];
+    return columns.filter((col) => {
+      const numericCount = currentData.filter((row) => {
+        const val = row[col];
+        return (
+          val !== null &amp;&amp; val !== undefined &amp;&amp; val !== "" &amp;&amp; !isNaN(Number(val))
+        );
+      }).length;
+      return numericCount > currentData.length * 0.5;
+    });
+  }, [currentData, columns]);
+
+  const [userMetricCol, setUserMetricCol] = useState("");
+  const selectedMetricCol =
+    userMetricCol &amp;&amp; numericColumns.includes(userMetricCol)
+      ? userMetricCol
+      : numericColumns[0] || "";
+
+  const [userXAxis, setUserXAxis] = useState("");
+  const selectedXAxis =
+    userXAxis &amp;&amp; columns.includes(userXAxis) ? userXAxis : columns[0] || "";
+
+  const [userYAxis, setUserYAxis] = useState("");
+  const selectedYAxis =
+    userYAxis &amp;&amp; numericColumns.includes(userYAxis)
+      ? userYAxis
+      : numericColumns[0] || "";
+
+  /**
+   * Métricas y estadísticas descriptivas calculadas sobre la columna seleccionada.
+   *
+   * @type {KPIStats}
+   */
+  const kpiStats = useMemo(() => {
+    if (!currentData || !selectedMetricCol) {
+      return { sum: 0, avg: 0, min: 0, max: 0, count: 0 };
+    }
+
+    const values = currentData
+      .map((row) => Number(row[selectedMetricCol]))
+      .filter((val) => !isNaN(val));
+
+    if (values.length === 0) {
+      return { sum: 0, avg: 0, min: 0, max: 0, count: 0 };
+    }
+
+    const sum = values.reduce((acc, curr) => acc + curr, 0);
+    const avg = sum / values.length;
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+
+    return {
+      sum: sum.toLocaleString(undefined, { maximumFractionDigits: 2 }),
+      avg: avg.toLocaleString(undefined, { maximumFractionDigits: 2 }),
+      min: min.toLocaleString(undefined, { maximumFractionDigits: 2 }),
+      max: max.toLocaleString(undefined, { maximumFractionDigits: 2 }),
+      count: values.length,
+    };
+  }, [currentData, selectedMetricCol]);
+
+  /**
+   * Datos agrupados y agregados para los 10 primeros elementos en la gráfica de barras.
+   *
+   * @type {ChartDataPoint[]}
+   */
+  const chartData = useMemo(() => {
+    if (!currentData || !selectedXAxis || !selectedYAxis) return [];
+
+    const aggregated = {};
+    currentData.forEach((row) => {
+      const key = String(row[selectedXAxis] ?? "Sin Categoría").slice(0, 15);
+      const val = Number(row[selectedYAxis]) || 0;
+      aggregated[key] = (aggregated[key] || 0) + val;
+    });
+
+    return Object.entries(aggregated)
+      .map(([name, value]) => ({ name, value }))
+      .slice(0, 10);
+  }, [currentData, selectedXAxis, selectedYAxis]);
+
+  if (!processedData || processedData.length === 0) return null;
+
+  return (
+    &lt;div className="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm overflow-hidden mb-6">
+      &lt;div
+        onClick={() => setIsOpen(!isOpen)}
+        className="p-4 bg-slate-50 dark:bg-zinc-900/90 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between cursor-pointer hover:bg-slate-100/80 dark:hover:bg-zinc-800/80 transition-colors"
+      >
+        &lt;div className="flex items-center gap-3">
+          &lt;div className="p-2 bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-400 rounded-lg">
+            &lt;BarChart3 className="w-5 h-5" />
+          &lt;/div>
+          &lt;div>
+            &lt;h3 className="font-semibold text-slate-800 dark:text-zinc-100 text-sm">
+              Análisis Estadístico e Indicadores (KPIs)
+            &lt;/h3>
+            &lt;p className="text-xs text-slate-500 dark:text-zinc-400">
+              Resumen métrico y visualización dinámica de datos
+            &lt;/p>
+          &lt;/div>
+        &lt;/div>
+
+        {isOpen ? (
+          &lt;ChevronUp className="w-4 h-4 text-slate-400 dark:text-zinc-500" />
+        ) : (
+          &lt;ChevronDown className="w-4 h-4 text-slate-400 dark:text-zinc-500" />
+        )}
+      &lt;/div>
+
+      {isOpen &amp;&amp; (
+        &lt;div className="p-6 space-y-6">
+          &lt;div>
+            &lt;div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+              &lt;h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 flex items-center gap-2">
+                &lt;Calculator className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                Resumen Métrico Numérico
+              &lt;/h4>
+
+              {numericColumns.length > 0 &amp;&amp; (
+                &lt;div className="flex items-center gap-2">
+                  &lt;span className="text-xs text-slate-500 dark:text-zinc-400">Métrica:&lt;/span>
+                  &lt;select
+                    value={selectedMetricCol}
+                    onChange={(e) => setUserMetricCol(e.target.value)}
+                    className="px-2.5 py-1 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 rounded-lg text-xs font-medium text-slate-700 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  >
+                    {numericColumns.map((col) => (
+                      &lt;option key={col} value={col}>
+                        {col}
+                      &lt;/option>
+                    ))}
+                  &lt;/select>
+                &lt;/div>
+              )}
+            &lt;/div>
+
+            {numericColumns.length > 0 ? (
+              &lt;div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                &lt;div className="p-4 bg-slate-50 dark:bg-zinc-950/60 border border-slate-100 dark:border-zinc-800 rounded-xl">
+                  &lt;span className="text-xs font-medium text-slate-400 dark:text-zinc-500 block mb-1">
+                    Suma Total
+                  &lt;/span>
+                  &lt;span className="text-xl font-bold text-slate-800 dark:text-zinc-100">
+                    {kpiStats.sum}
+                  &lt;/span>
+                &lt;/div>
+                &lt;div className="p-4 bg-slate-50 dark:bg-zinc-950/60 border border-slate-100 dark:border-zinc-800 rounded-xl">
+                  &lt;span className="text-xs font-medium text-slate-400 dark:text-zinc-500 block mb-1">
+                    Promedio
+                  &lt;/span>
+                  &lt;span className="text-xl font-bold text-slate-800 dark:text-zinc-100">
+                    {kpiStats.avg}
+                  &lt;/span>
+                &lt;/div>
+                &lt;div className="p-4 bg-slate-50 dark:bg-zinc-950/60 border border-slate-100 dark:border-zinc-800 rounded-xl">
+                  &lt;span className="text-xs font-medium text-slate-400 dark:text-zinc-500 block mb-1">
+                    Valor Mínimo
+                  &lt;/span>
+                  &lt;span className="text-xl font-bold text-slate-800 dark:text-zinc-100">
+                    {kpiStats.min}
+                  &lt;/span>
+                &lt;/div>
+                &lt;div className="p-4 bg-slate-50 dark:bg-zinc-950/60 border border-slate-100 dark:border-zinc-800 rounded-xl">
+                  &lt;span className="text-xs font-medium text-slate-400 dark:text-zinc-500 block mb-1">
+                    Valor Máximo
+                  &lt;/span>
+                  &lt;span className="text-xl font-bold text-slate-800 dark:text-zinc-100">
+                    {kpiStats.max}
+                  &lt;/span>
+                &lt;/div>
+              &lt;/div>
+            ) : (
+              &lt;p className="text-xs text-slate-400 dark:text-zinc-500 italic bg-slate-50 dark:bg-zinc-950/60 p-3 rounded-lg border border-slate-100 dark:border-zinc-800">
+                No se detectaron columnas numéricas continuas para calcular
+                estadísticas avanzadas.
+              &lt;/p>
+            )}
+          &lt;/div>
+
+          &lt;hr className="border-slate-100 dark:border-zinc-800" />
+
+          &lt;div>
+            &lt;div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+              &lt;h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 flex items-center gap-2">
+                &lt;PieChartIcon className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                Visualización Gráfica (Top 10)
+              &lt;/h4>
+
+              &lt;div className="flex flex-wrap items-center gap-3 text-xs">
+                &lt;div className="flex items-center gap-1.5">
+                  &lt;span className="text-slate-500 dark:text-zinc-400">Eje X:&lt;/span>
+                  &lt;select
+                    value={selectedXAxis}
+                    onChange={(e) => setUserXAxis(e.target.value)}
+                    className="px-2 py-1 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 text-slate-800 dark:text-zinc-200 rounded focus:outline-none"
+                  >
+                    {columns.map((col) => (
+                      &lt;option key={col} value={col}>
+                        {col}
+                      &lt;/option>
+                    ))}
+                  &lt;/select>
+                &lt;/div>
+
+                {numericColumns.length > 0 &amp;&amp; (
+                  &lt;div className="flex items-center gap-1.5">
+                    &lt;span className="text-slate-500 dark:text-zinc-400">Eje Y:&lt;/span>
+                    &lt;select
+                      value={selectedYAxis}
+                      onChange={(e) => setUserYAxis(e.target.value)}
+                      className="px-2 py-1 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 text-slate-800 dark:text-zinc-200 rounded focus:outline-none"
+                    >
+                      {numericColumns.map((col) => (
+                        &lt;option key={col} value={col}>
+                          {col}
+                        &lt;/option>
+                      ))}
+                    &lt;/select>
+                  &lt;/div>
+                )}
+              &lt;/div>
+            &lt;/div>
+
+            {chartData.length > 0 &amp;&amp; numericColumns.length > 0 ? (
+              &lt;div className="bg-slate-50 dark:bg-zinc-950/60 border border-slate-100 dark:border-zinc-800 p-4 rounded-xl">
+                &lt;div className="w-full h-64">
+                  &lt;ResponsiveContainer width="100%" height="100%">
+                    &lt;BarChart
+                      data={chartData}
+                      margin={{ top: 10, right: 20, left: 10, bottom: 40 }}
+                    >
+                      &lt;CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke={isDark ? "#27272a" : "#e2e8f0"}
+                        vertical={false}
+                      />
+                      &lt;XAxis
+                        dataKey="name"
+                        stroke={isDark ? "#a1a1aa" : "#64748b"}
+                        fontSize={11}
+                        interval={0}
+                        angle={-25}
+                        textAnchor="end"
+                      />
+                      &lt;YAxis
+                        stroke={isDark ? "#a1a1aa" : "#64748b"}
+                        fontSize={11}
+                        tickFormatter={(v) =>
+                          v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v
+                        }
+                      />
+                      &lt;Tooltip
+                        contentStyle={{
+                          backgroundColor: isDark ? "#27272a" : "#fff",
+                          color: isDark ? "#fff" : "#000",
+                          borderRadius: "8px",
+                          border: isDark ? "1px solid #27272a" : "1px solid #e2e8f0",
+                          fontSize: "12px",
+                        }}
+                        cursor={{ fill: isDark ? "#27272a" : "#e2e8f0" }}
+                        itemStyle={{ color: "#34d399" }}
+                      />
+                      &lt;Bar
+                        dataKey="value"
+                        name={selectedYAxis}
+                        fill="#059669"
+                        radius={[4, 4, 0, 0]}
+                      />
+                    &lt;/BarChart>
+                  &lt;/ResponsiveContainer>
+                &lt;/div>
+              &lt;/div>
+            ) : (
+              &lt;div className="text-center py-8 bg-slate-50 dark:bg-zinc-950/60 border border-slate-100 dark:border-zinc-800 rounded-xl text-slate-400 dark:text-zinc-500 text-xs">
+                Seleccione columnas válidas para renderizar la visualización de
+                datos.
+              &lt;/div>
+            )}
+          &lt;/div>
+        &lt;/div>
+      )}
+    &lt;/div>
+  );
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#COLOR_PALETTES">COLOR_PALETTES</a></li><li><a href="global.html#DataContext">DataContext</a></li><li><a href="global.html#DataProvider">DataProvider</a></li><li><a href="global.html#MainContent">MainContent</a></li><li><a href="global.html#ThemeContext">ThemeContext</a></li><li><a href="global.html#ThemeProvider">ThemeProvider</a></li><li><a href="global.html#applyThemeToDOM">applyThemeToDOM</a></li><li><a href="global.html#useData">useData</a></li><li><a href="global.html#useTheme">useTheme</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Mon Nov 09 2026 11:11:06 GMT-0300 (Argentina Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
