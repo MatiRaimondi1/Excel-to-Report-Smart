@@ -1,3 +1,10 @@
+/**
+ * @file eslint.config.js
+ * @description Configuración modular (Flat Config) para ESLint.
+ * Aplica las reglas recomendadas de JavaScript, mejores prácticas para React Hooks,
+ * y soporte para Fast Refresh con Vite en archivos con extensión `.js` y `.jsx`.
+ */
+
 import js from '@eslint/js'
 import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'
@@ -5,7 +12,7 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(['dist', 'docs/**']),
   {
     files: ['**/*.{js,jsx}'],
     extends: [

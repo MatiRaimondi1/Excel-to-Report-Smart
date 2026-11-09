@@ -1,3 +1,10 @@
+/**
+ * @file App.jsx
+ * @description Componente raíz y contenedor principal de la aplicación Excel to Report Smart.
+ * Estructura el encabezado, navegación entre creación de reportes e historial, conmutador de tema,
+ * y renderizado condicional de la suite de herramientas analíticas.
+ */
+
 import { useState, useContext } from "react";
 import { DataProvider, DataContext, useData } from "./context/DataContext";
 import { ThemeProvider, ThemeContext, useTheme } from "./context/ThemeContext";
@@ -17,6 +24,14 @@ import {
   RefreshCw,
 } from "lucide-react";
 
+/**
+ * Componente que representa el cuerpo principal y la barra de navegación de la aplicación.
+ * Consume `DataContext` y `ThemeContext` para gestionar la visualización de la interfaz
+ * según el estado del archivo procesado y la pestaña activa ("create" o "history").
+ *
+ * @component
+ * @returns {JSX.Element} Estructura visual con barra superior y módulos de trabajo dinámicos.
+ */
 export function MainContent() {
   const { rawData, fileName, resetData } = useData();
   const { isDark, toggleTheme } = useTheme();
@@ -163,6 +178,15 @@ export function MainContent() {
   );
 }
 
+/**
+ * Componente raíz de la aplicación.
+ * Verifica la existencia de `DataContext` y `ThemeContext` en la jerarquía superior
+ * y los inicializa condicionalmente para ofrecer compatibilidad tanto en ejecución productiva
+ * como en entornos de pruebas aislados.
+ *
+ * @component
+ * @returns {JSX.Element} Aplicación envuelta con sus respectivos proveedores de contexto.
+ */
 export default function App() {
   const existingDataContext = useContext(DataContext);
   const existingThemeContext = useContext(ThemeContext);
@@ -179,4 +203,3 @@ export default function App() {
 
   return content;
 }
-

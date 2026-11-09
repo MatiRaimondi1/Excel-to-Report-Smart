@@ -1,3 +1,10 @@
+/**
+ * @file DataExplorer.jsx
+ * @description Componente interactivo para exploración, búsqueda global, filtrado por columna,
+ * ordenamiento inteligente (numérico o alfabético) y paginación configurable de los datos cargados.
+ * Se sincroniza bidireccionalmente con el `DataContext` para propagar los filtros a los gráficos y reportes.
+ */
+
 import { useState, useMemo } from "react";
 import { useData } from "../context/DataContext";
 import {
@@ -13,6 +20,14 @@ import {
   Table as TableIcon,
 } from "lucide-react";
 
+/**
+ * Componente para visualización y manipulación de datos tabulares en pantalla.
+ * Permite buscar texto en cualquier columna, filtrar por una columna específica,
+ * alternar el ordenamiento ascendente/descendente y navegar a través de páginas de resultados.
+ *
+ * @component
+ * @returns {JSX.Element|null} Panel interactivo de la tabla de datos o `null` si no hay registros.
+ */
 export default function DataExplorer() {
   const {
     processedData,
@@ -57,11 +72,16 @@ export default function DataExplorer() {
   }, [isControlled, ctxSortConfig, fallbackSortConfig, localSortConfig]);
   const setSortConfig = isControlled ? ctxSetSortConfig : setLocalSortConfig;
 
+  /**
+   * Datos base tomados desde `processedData` o en su defecto `rawData`.
+   */
   const baseData = useMemo(() => {
     return processedData || rawData || [];
   }, [processedData, rawData]);
 
-  // Fallback si no está controlado globalmente
+  /**
+   * Fallback de filtrado local para cuando el contexto no controla el estado de filtrado.
+   */
   const localFilteredData = useMemo(() => {
     if (isControlled) return null;
     return baseData.filter((row) => {
@@ -81,6 +101,9 @@ export default function DataExplorer() {
     });
   }, [isControlled, baseData, searchTerm, selectedColumnFilter, columnFilterValue]);
 
+  /**
+   * Fallback de ordenamiento local si no se encuentra controlado globalmente.
+   */
   const localSortedData = useMemo(() => {
     if (isControlled) return null;
     const dataToSort = [...(localFilteredData || [])];
@@ -106,7 +129,9 @@ export default function DataExplorer() {
     });
   }, [isControlled, localFilteredData, sortConfig]);
 
-  // Si está controlado y hay filtro/orden, usamos ctxFilteredData; si no hay filtro, baseData
+  /**
+   * Colección final de datos ordenados y filtrados a desplegar en la tabla.
+   */
   const sortedData = useMemo(() => {
     if (isControlled) {
       return ctxFilteredData !== null ? ctxFilteredData : baseData;
@@ -115,11 +140,20 @@ export default function DataExplorer() {
   }, [isControlled, ctxFilteredData, baseData, localSortedData]);
 
   const totalPages = Math.ceil(sortedData.length / itemsPerPage) || 1;
+
+  /**
+   * Subconjunto de registros paginados para la página actual.
+   */
   const paginatedData = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
     return sortedData.slice(start, start + itemsPerPage);
   }, [sortedData, currentPage, itemsPerPage]);
 
+  /**
+   * Alterna la dirección de ordenamiento de una columna (ascendente -> descendente).
+   *
+   * @param {string} columnKey - Nombre del encabezado de la columna a ordenar.
+   */
   const handleSort = (columnKey) => {
     let direction = "asc";
     if (sortConfig.key === columnKey && sortConfig.direction === "asc") {
@@ -128,6 +162,9 @@ export default function DataExplorer() {
     setSortConfig({ key: columnKey, direction });
   };
 
+  /**
+   * Limpia todos los filtros y términos de búsqueda restableciendo la paginación a la página 1.
+   */
   const handleResetFilters = () => {
     if (isControlled && ctxResetFilters) {
       ctxResetFilters();

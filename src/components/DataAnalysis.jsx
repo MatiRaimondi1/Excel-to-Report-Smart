@@ -1,3 +1,10 @@
+/**
+ * @file DataAnalysis.jsx
+ * @description Componente de resumen analítico e indicadores clave de rendimiento (KPIs).
+ * Identifica de forma autónoma columnas con valores numéricos continuos, computa estadísticas descriptivas
+ * fundamentales (suma, media, mínimos y máximos) y renderiza una gráfica preliminar interactiva con Recharts.
+ */
+
 import { useState, useMemo } from "react";
 import { useData } from "../context/DataContext";
 import { useTheme } from "../context/ThemeContext";
@@ -18,17 +25,48 @@ import {
   CartesianGrid,
 } from "recharts";
 
+/**
+ * @typedef {Object} KPIStats
+ * Indicadores clave de rendimiento calculados para la columna numérica seleccionada.
+ * @property {string|number} sum - Suma total formateada con separador de miles.
+ * @property {string|number} avg - Media aritmética calculada sobre valores válidos.
+ * @property {string|number} min - Valor numérico mínimo encontrado.
+ * @property {string|number} max - Valor numérico máximo encontrado.
+ * @property {number} count - Total de filas con valores numéricos computables.
+ */
+
+/**
+ * @typedef {Object} ChartDataPoint
+ * Punto de datos para la gráfica de barras rápida de análisis.
+ * @property {string} name - Etiqueta representativa de la categoría en el eje X.
+ * @property {number} value - Sumatoria acumulada para la métrica seleccionada en el eje Y.
+ */
+
+/**
+ * Componente que muestra las tarjetas de indicadores numéricos y una visualización gráfica resumida.
+ *
+ * @component
+ * @returns {JSX.Element|null} Panel analítico con KPIs y gráfico de barras, o `null` si no hay datos.
+ */
 export default function DataAnalysis() {
   const { processedData, filteredData, columns } = useData();
   const { isDark } = useTheme();
   const [isOpen, setIsOpen] = useState(true);
 
+  /**
+   * Datos activos sincronizados con los filtros de búsqueda y ordenamiento de DataExplorer.
+   */
   const currentData = useMemo(() => {
     return filteredData !== null && filteredData !== undefined
       ? filteredData
       : processedData || [];
   }, [filteredData, processedData]);
 
+  /**
+   * Detección heurística de columnas numéricas continuas (aquellas donde más del 50% de filas son números válidos).
+   *
+   * @type {string[]}
+   */
   const numericColumns = useMemo(() => {
     if (!currentData || currentData.length === 0) return [];
     return columns.filter((col) => {
@@ -58,6 +96,11 @@ export default function DataAnalysis() {
       ? userYAxis
       : numericColumns[0] || "";
 
+  /**
+   * Métricas y estadísticas descriptivas calculadas sobre la columna seleccionada.
+   *
+   * @type {KPIStats}
+   */
   const kpiStats = useMemo(() => {
     if (!currentData || !selectedMetricCol) {
       return { sum: 0, avg: 0, min: 0, max: 0, count: 0 };
@@ -85,6 +128,11 @@ export default function DataAnalysis() {
     };
   }, [currentData, selectedMetricCol]);
 
+  /**
+   * Datos agrupados y agregados para los 10 primeros elementos en la gráfica de barras.
+   *
+   * @type {ChartDataPoint[]}
+   */
   const chartData = useMemo(() => {
     if (!currentData || !selectedXAxis || !selectedYAxis) return [];
 

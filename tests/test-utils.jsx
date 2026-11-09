@@ -1,8 +1,20 @@
+/**
+ * @file test-utils.jsx
+ * @description Utilidades de testing y mocks para Vitest y React Testing Library.
+ * Proporciona datasets sintéticos (ventas numéricas, datos cualitativos), un proveedor
+ * simulado configurable (`MockDataProvider`) y funciones auxiliares para renderizar componentes
+ * dentro del contexto de datos.
+ */
+
 /* eslint-disable react-refresh/only-export-components */
 import { render } from "@testing-library/react";
 import { useState, useMemo } from "react";
-import { DataProvider, DataContext } from "../src/context/DataContext"
+import { DataProvider, DataContext } from "../src/context/DataContext";
 
+/**
+ * Conjunto de datos simulado de ventas con métricas numéricas, categorías y fechas.
+ * @type {Array<Object.<string, any>>}
+ */
 export const mockSalesData = [
   {
     ID: 1,
@@ -54,6 +66,10 @@ export const mockSalesData = [
   },
 ];
 
+/**
+ * Lista de columnas detectadas para el dataset `mockSalesData`.
+ * @type {string[]}
+ */
 export const mockSalesColumns = [
   "ID",
   "Producto",
@@ -63,6 +79,10 @@ export const mockSalesColumns = [
   "Fecha",
 ];
 
+/**
+ * Dataset sintético que contiene únicamente campos textuales / cualitativos sin métricas numéricas.
+ * @type {Array<Object.<string, string>>}
+ */
 export const mockTextOnlyData = [
   { Cliente: "Ana", Estado: "Completado", Canal: "Web" },
   { Cliente: "Carlos", Estado: "Pendiente", Canal: "Tienda" },
@@ -70,8 +90,27 @@ export const mockTextOnlyData = [
   { Cliente: "Diana", Estado: "Cancelado", Canal: "App" },
 ];
 
+/**
+ * Columnas correspondientes al dataset `mockTextOnlyData`.
+ * @type {string[]}
+ */
 export const mockTextOnlyColumns = ["Cliente", "Estado", "Canal"];
 
+/**
+ * Proveedor simulado de `DataContext` que replica el comportamiento global para tests.
+ * Permite inyectar datos iniciales, historial y estados de error/carga controlados.
+ *
+ * @component
+ * @param {Object} props - Propiedades del componente de testing.
+ * @param {React.ReactNode} props.children - Componentes envueltos por el proveedor mock.
+ * @param {Array<Object.<string, any>>} [props.initialData=mockSalesData] - Datos iniciales para `rawData` y `processedData`.
+ * @param {string[]} [props.initialColumns=mockSalesColumns] - Lista de encabezados iniciales.
+ * @param {string} [props.initialFileName="ventas_2026.xlsx"] - Nombre simulado del archivo Excel.
+ * @param {Array<Object>} [props.initialHistory=[]] - Historial inicial de reportes.
+ * @param {string|null} [props.initialError=null] - Mensaje de error inicial simulado.
+ * @param {boolean} [props.initialLoading=false] - Estado inicial de carga.
+ * @returns {JSX.Element} Proveedor de contexto DataContext configurado para testing.
+ */
 export function MockDataProvider({
   children,
   initialData = mockSalesData,
@@ -224,10 +263,23 @@ export function MockDataProvider({
   );
 }
 
+/**
+ * Función auxiliar para renderizar un componente dentro del `MockDataProvider`.
+ *
+ * @param {React.ReactElement} ui - Elemento React a renderizar en el DOM de pruebas.
+ * @param {Object} [mockProps={}] - Propiedades iniciales para parametrizar el `MockDataProvider`.
+ * @returns {import("@testing-library/react").RenderResult} Resultado del renderizado de React Testing Library.
+ */
 export function renderWithMockData(ui, mockProps = {}) {
   return render(<MockDataProvider {...mockProps}>{ui}</MockDataProvider>);
 }
 
+/**
+ * Función auxiliar para renderizar un componente dentro del `DataProvider` de producción real.
+ *
+ * @param {React.ReactElement} ui - Elemento React a probar.
+ * @returns {import("@testing-library/react").RenderResult} Resultado del renderizado.
+ */
 export function renderWithRealProvider(ui) {
   return render(<DataProvider>{ui}</DataProvider>);
 }

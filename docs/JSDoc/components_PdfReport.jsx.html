@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: components/PdfReport.jsx</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: components/PdfReport.jsx</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @file PdfReport.jsx
+ * @description Componente para diseño, previsualización interactiva y generación de reportes ejecutivos en PDF.
+ * Aplica estilos especializados para medios de impresión (`@media print`), personalización temática corporativa
+ * (índigo, esmeralda y pizarra), inclusión selectiva de KPIs y gráficos, y persistencia automática en el historial.
+ */
+
+import { useState, useRef, useMemo } from "react";
+import { useData } from "../context/DataContext";
+import {
+  Printer,
+  Eye,
+  Settings2,
+  FileText,
+  ChevronDown,
+  ChevronUp,
+  BarChart3,
+  Filter,
+} from "lucide-react";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+} from "recharts";
+
+/**
+ * Componente que permite personalizar la plantilla de un reporte ejecutivo, previsualizarlo
+ * en pantalla y exportarlo a formato PDF mediante el motor de impresión del navegador.
+ *
+ * @component
+ * @returns {JSX.Element|null} Panel de configuración y previsualización de reporte o `null` si no hay datos.
+ */
+export default function PdfReport() {
+  const {
+    processedData,
+    filteredData,
+    sortConfig,
+    columns,
+    fileName,
+    saveToHistory,
+  } = useData();
+  const [isOpen, setIsOpen] = useState(true);
+
+  // Opciones de Personalización de Plantilla
+  const [reportTitle, setReportTitle] = useState(
+    "Reporte Operativo y Ejecutivo",
+  );
+  const [templateTheme, setTemplateTheme] = useState("emerald"); // 'indigo', 'emerald', 'slate'
+  const [showKPIs, setShowKPIs] = useState(true);
+  const [showChart, setShowChart] = useState(true);
+  const [maxRowsPrint, setMaxRowsPrint] = useState(50); // Límite de filas en el PDF para brevedad
+  const printRef = useRef();
+
+  // Los datos activos en el PDF se actualizan en tiempo real al filtrar u ordenar desde DataExplorer
+  const currentData = useMemo(() => {
+    return filteredData !== null &amp;&amp; filteredData !== undefined
+      ? filteredData
+      : processedData || [];
+  }, [filteredData, processedData]);
+
+  // Detección de columnas para el gráfico del PDF
+  const numericColumns = useMemo(() => {
+    if (!currentData || currentData.length === 0) return [];
+    return columns.filter((col) => {
+      const count = currentData.filter((row) => {
+        const val = row[col];
+        return val !== null &amp;&amp; val !== undefined &amp;&amp; val !== "" &amp;&amp; !isNaN(Number(val));
+      }).length;
+      return count > currentData.length * 0.4;
+    });
+  }, [currentData, columns]);
+
+  const pdfCategoryCol = columns[0] || "";
+  const pdfMetricCol = numericColumns[0] || "";
+
+  const pdfChartData = useMemo(() => {
+    if (!currentData || currentData.length === 0 || !pdfCategoryCol) return [];
+    const grouped = {};
+    currentData.forEach((row) => {
+      const cat = String(row[pdfCategoryCol] ?? "Sin Categoría").slice(0, 16);
+      const val = pdfMetricCol ? Number(row[pdfMetricCol]) || 0 : 1;
+      grouped[cat] = (grouped[cat] || 0) + val;
+    });
+
+    let items = Object.entries(grouped)
+      .map(([name, value]) => ({ name, value: Number(value.toFixed(2)) }));
+
+    // Si hay ordenamiento activo desde DataExplorer, sincronizar el orden del gráfico
+    if (sortConfig?.key === pdfCategoryCol) {
+      items.sort((a, b) =>
+        sortConfig.direction === "asc"
+          ? a.name.localeCompare(b.name)
+          : b.name.localeCompare(a.name),
+      );
+    } else if (sortConfig?.key === pdfMetricCol) {
+      items.sort((a, b) =>
+        sortConfig.direction === "asc" ? a.value - b.value : b.value - a.value,
+      );
+    } else {
+      items.sort((a, b) => b.value - a.value);
+    }
+
+    return items.slice(0, 8);
+  }, [currentData, pdfCategoryCol, pdfMetricCol, sortConfig]);
+
+  if (!processedData || processedData.length === 0) return null;
+
+  // Cálculo de KPIs rápidos para el PDF basados en los datos actuales
+  const totalRows = currentData.length;
+  const totalCols = columns.length;
+  const isFiltered = filteredData !== null &amp;&amp; filteredData !== undefined;
+
+  /**
+   * Registra el reporte y su instantánea actual en el historial de `localStorage`
+   * y abre el cuadro de diálogo de impresión/guardado en PDF del navegador.
+   */
+  const handlePrint = () => {
+    // Guardar metadata y snapshot de datos en el historial local
+    saveToHistory({
+      title: reportTitle,
+      theme: templateTheme,
+      rowCount: Math.min(maxRowsPrint, totalRows),
+      colCount: totalCols,
+      columns: columns,
+      data: currentData.slice(0, maxRowsPrint),
+      showKPIs,
+      showChart,
+      chartData: pdfChartData,
+      metricCol: pdfMetricCol,
+      categoryCol: pdfCategoryCol,
+      date: new Date().toLocaleDateString(),
+    });
+
+    // Disparar ventana de impresión/Guardar PDF del navegador
+    window.print();
+  };
+
+  /**
+   * Definiciones de estilos y paletas cromáticas disponibles para el diseño del reporte en PDF.
+   */
+  const themeColors = {
+    indigo: {
+      primary: "bg-indigo-600",
+      primaryBg: "#4f46e5",
+      text: "text-indigo-600 dark:text-indigo-400",
+      border: "border-indigo-600 dark:border-indigo-500",
+      borderColor: "#4f46e5",
+      badge: "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300",
+      badgeBg: "#eef2ff",
+      badgeText: "#3730a3",
+      badgeBorder: "#c7d2fe",
+      chartColor: "#4f46e5",
+    },
+    emerald: {
+      primary: "bg-emerald-600",
+      primaryBg: "#059669",
+      text: "text-emerald-600 dark:text-emerald-400",
+      border: "border-emerald-600 dark:border-emerald-500",
+      borderColor: "#059669",
+      badge: "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300",
+      badgeBg: "#ecfdf5",
+      badgeText: "#065f46",
+      badgeBorder: "#a7f3d0",
+      chartColor: "#059669",
+    },
+    slate: {
+      primary: "bg-slate-800 dark:bg-zinc-800",
+      primaryBg: "#1e293b",
+      text: "text-slate-800 dark:text-zinc-200",
+      border: "border-slate-800 dark:border-zinc-700",
+      borderColor: "#1e293b",
+      badge: "bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300",
+      badgeBg: "#f1f5f9",
+      badgeText: "#1e293b",
+      badgeBorder: "#cbd5e1",
+      chartColor: "#334155",
+    },
+  };
+
+  const currentTheme = themeColors[templateTheme];
+
+  return (
+    &lt;div className="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm overflow-hidden mb-6">
+      {/* CSS para forzar impresión exacta de colores y backgrounds en el PDF */}
+      &lt;style>{`
+        @media print {
+          @page {
+            size: auto;
+            margin: 12mm 15mm;
+          }
+          *, *::before, *::after {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+          }
+          body * {
+            visibility: hidden;
+          }
+          #pdf-printable-area, #pdf-printable-area * {
+            visibility: visible !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+          }
+          #pdf-printable-area {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 24px !important;
+            background-color: #ffffff !important;
+            color: #0f172a !important;
+            box-shadow: none !important;
+            border: none !important;
+            display: block !important;
+          }
+          .no-print {
+            display: none !important;
+          }
+        }
+      `}&lt;/style>
+
+      {/* Header Desplegable */}
+      &lt;div
+        onClick={() => setIsOpen(!isOpen)}
+        className="p-4 bg-slate-50 dark:bg-zinc-900/90 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between cursor-pointer hover:bg-slate-100/80 dark:hover:bg-zinc-800/80 transition-colors no-print"
+      >
+        &lt;div className="flex items-center gap-3">
+          &lt;div className="p-2 bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-400 rounded-lg">
+            &lt;FileText className="w-5 h-5" />
+          &lt;/div>
+          &lt;div>
+            &lt;div className="flex items-center gap-2">
+              &lt;h3 className="font-semibold text-slate-800 dark:text-zinc-100 text-sm">
+                Configuración y Vista Previa de Reporte PDF
+              &lt;/h3>
+              {isFiltered &amp;&amp; (
+                &lt;span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300">
+                  &lt;Filter className="w-3 h-3" />
+                  Sincronizado con filtro ({totalRows} filas)
+                &lt;/span>
+              )}
+            &lt;/div>
+            &lt;p className="text-xs text-slate-500 dark:text-zinc-400">
+              Personaliza la plantilla y exporta el documento final listo para distribución
+            &lt;/p>
+          &lt;/div>
+        &lt;/div>
+
+        {isOpen ? (
+          &lt;ChevronUp className="w-4 h-4 text-slate-400 dark:text-zinc-500" />
+        ) : (
+          &lt;ChevronDown className="w-4 h-4 text-slate-400 dark:text-zinc-500" />
+        )}
+      &lt;/div>
+
+      {isOpen &amp;&amp; (
+        &lt;div className="p-6 space-y-6">
+          {/* Panel de Personalización (No imprimible) */}
+          &lt;div className="p-4 bg-slate-50 dark:bg-zinc-950/70 border border-slate-200 dark:border-zinc-800 rounded-xl space-y-4 no-print">
+            &lt;h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 flex items-center gap-2">
+              &lt;Settings2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              Opciones de Personalización
+            &lt;/h4>
+
+            &lt;div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+              &lt;div>
+                &lt;label htmlFor="report-title-input" className="block text-slate-600 dark:text-zinc-300 font-medium mb-1">
+                  Título del Reporte
+                &lt;/label>
+                &lt;input
+                  id="report-title-input"
+                  type="text"
+                  value={reportTitle}
+                  onChange={(e) => setReportTitle(e.target.value)}
+                  className="w-full px-3 py-1.5 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 text-slate-800 dark:text-zinc-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              &lt;/div>
+
+              &lt;div>
+                &lt;label htmlFor="report-theme-select" className="block text-slate-600 dark:text-zinc-300 font-medium mb-1">
+                  Tema / Estilo Visual
+                &lt;/label>
+                &lt;select
+                  id="report-theme-select"
+                  value={templateTheme}
+                  onChange={(e) => setTemplateTheme(e.target.value)}
+                  className="w-full px-3 py-1.5 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 text-slate-800 dark:text-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  &lt;option value="indigo">Corporativo (Índigo)&lt;/option>
+                  &lt;option value="emerald">Financiero (Esmeralda)&lt;/option>
+                  &lt;option value="slate">Formal (Pizarra)&lt;/option>
+                &lt;/select>
+              &lt;/div>
+
+              &lt;div>
+                &lt;label className="block text-slate-600 dark:text-zinc-300 font-medium mb-1">
+                  Máx. Filas en PDF
+                &lt;/label>
+                &lt;select
+                  value={maxRowsPrint}
+                  onChange={(e) => setMaxRowsPrint(Number(e.target.value))}
+                  className="w-full px-3 py-1.5 bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 text-slate-800 dark:text-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  &lt;option value={20}>Top 20 Registros&lt;/option>
+                  &lt;option value={50}>Top 50 Registros&lt;/option>
+                  &lt;option value={100}>Top 100 Registros&lt;/option>
+                  &lt;option value={totalRows}>Todos ({totalRows})&lt;/option>
+                &lt;/select>
+              &lt;/div>
+
+              &lt;div className="flex items-end">
+                &lt;button
+                  onClick={handlePrint}
+                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg shadow-sm transition-colors text-xs"
+                >
+                  &lt;Printer className="w-4 h-4" />
+                  Exportar a PDF
+                &lt;/button>
+              &lt;/div>
+            &lt;/div>
+
+            &lt;div className="flex flex-wrap items-center gap-6 pt-3 border-t border-slate-200/70 dark:border-zinc-800 text-xs text-slate-600 dark:text-zinc-300">
+              &lt;label className="flex items-center gap-2 cursor-pointer select-none">
+                &lt;input
+                  type="checkbox"
+                  checked={showKPIs}
+                  onChange={(e) => setShowKPIs(e.target.checked)}
+                  className="rounded border-slate-300 dark:border-zinc-700 text-emerald-600 focus:ring-emerald-500"
+                />
+                &lt;span>Incluir Tarjetas de KPIs&lt;/span>
+              &lt;/label>
+
+              &lt;label className="flex items-center gap-2 cursor-pointer select-none">
+                &lt;input
+                  type="checkbox"
+                  checked={showChart}
+                  onChange={(e) => setShowChart(e.target.checked)}
+                  className="rounded border-slate-300 dark:border-zinc-700 text-emerald-600 focus:ring-emerald-500"
+                />
+                &lt;span className="flex items-center gap-1.5">
+                  &lt;BarChart3 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  Incluir Gráfico en PDF
+                &lt;/span>
+              &lt;/label>
+            &lt;/div>
+          &lt;/div>
+
+          {/* Vista Previa de la Documentación Imprimible */}
+          &lt;div className="border border-slate-200 dark:border-zinc-800 rounded-xl p-4 bg-slate-100/50 dark:bg-zinc-950/80">
+            &lt;div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-zinc-400 mb-3 no-print">
+              &lt;Eye className="w-4 h-4" />
+              Vista Previa del Documento Final:
+            &lt;/div>
+
+            {/* Hoja Virtual / Contenido del PDF */}
+            &lt;div
+              id="pdf-printable-area"
+              ref={printRef}
+              className="bg-white p-8 border border-slate-200 dark:border-zinc-800 rounded-lg shadow-sm space-y-6 max-w-4xl mx-auto text-slate-900"
+              style={{ backgroundColor: "#ffffff", color: "#0f172a" }}
+            >
+              {/* Encabezado del PDF */}
+              &lt;div
+                style={{ borderBottom: `3px solid ${currentTheme.borderColor}` }}
+                className="pb-4 flex justify-between items-start"
+              >
+                &lt;div>
+                  &lt;h1 className="text-2xl font-bold text-slate-900">
+                    {reportTitle}
+                  &lt;/h1>
+                  &lt;p className="text-xs text-slate-500 mt-1">
+                    Origen:{" "}
+                    &lt;span className="font-semibold text-slate-700">
+                      {fileName}
+                    &lt;/span>{" "}
+                    | Generado automáticamente
+                  &lt;/p>
+                &lt;/div>
+                &lt;div className="text-right text-xs text-slate-500">
+                  &lt;p>Fecha de emisión:&lt;/p>
+                  &lt;p className="font-semibold text-slate-700">
+                    {new Date().toLocaleDateString()}
+                  &lt;/p>
+                &lt;/div>
+              &lt;/div>
+
+              {/* Indicadores en el PDF */}
+              {showKPIs &amp;&amp; (
+                &lt;div className="grid grid-cols-3 gap-4">
+                  &lt;div
+                    style={{
+                      backgroundColor: currentTheme.badgeBg,
+                      borderColor: currentTheme.badgeBorder,
+                      color: currentTheme.badgeText,
+                    }}
+                    className="p-3.5 rounded-xl border shadow-xs"
+                  >
+                    &lt;span
+                      style={{ color: currentTheme.badgeText }}
+                      className="text-xs font-semibold block uppercase tracking-wider"
+                    >
+                      Total Filas Procesadas
+                    &lt;/span>
+                    &lt;span
+                      style={{ color: currentTheme.badgeText }}
+                      className="text-xl font-bold block mt-1"
+                    >
+                      {totalRows}
+                    &lt;/span>
+                  &lt;/div>
+                  &lt;div
+                    style={{
+                      backgroundColor: currentTheme.badgeBg,
+                      borderColor: currentTheme.badgeBorder,
+                      color: currentTheme.badgeText,
+                    }}
+                    className="p-3.5 rounded-xl border shadow-xs"
+                  >
+                    &lt;span
+                      style={{ color: currentTheme.badgeText }}
+                      className="text-xs font-semibold block uppercase tracking-wider"
+                    >
+                      Columnas Presentes
+                    &lt;/span>
+                    &lt;span
+                      style={{ color: currentTheme.badgeText }}
+                      className="text-xl font-bold block mt-1"
+                    >
+                      {totalCols}
+                    &lt;/span>
+                  &lt;/div>
+                  &lt;div
+                    style={{
+                      backgroundColor: currentTheme.badgeBg,
+                      borderColor: currentTheme.badgeBorder,
+                      color: currentTheme.badgeText,
+                    }}
+                    className="p-3.5 rounded-xl border shadow-xs"
+                  >
+                    &lt;span
+                      style={{ color: currentTheme.badgeText }}
+                      className="text-xs font-semibold block uppercase tracking-wider"
+                    >
+                      Muestra Exportada
+                    &lt;/span>
+                    &lt;span
+                      style={{ color: currentTheme.badgeText }}
+                      className="text-xl font-bold block mt-1"
+                    >
+                      {Math.min(maxRowsPrint, totalRows)} de {totalRows}
+                    &lt;/span>
+                  &lt;/div>
+                &lt;/div>
+              )}
+
+              {/* Gráfico Visual en el PDF */}
+              {showChart &amp;&amp; pdfChartData.length > 0 &amp;&amp; (
+                &lt;div
+                  style={{ backgroundColor: "#f8fafc", borderColor: "#e2e8f0" }}
+                  className="border rounded-xl p-4"
+                >
+                  &lt;h3
+                    style={{ color: "#334155" }}
+                    className="text-xs font-bold uppercase tracking-wider mb-3 flex items-center gap-1.5"
+                  >
+                    &lt;BarChart3 className="w-4 h-4 text-slate-600" />
+                    Resumen Gráfico ({pdfMetricCol || "Distribución"} por {pdfCategoryCol})
+                  &lt;/h3>
+                  &lt;div className="w-full h-44 flex items-center justify-center">
+                    &lt;ResponsiveContainer width="100%" height="100%" minWidth={300} minHeight={170}>
+                      &lt;BarChart
+                        data={pdfChartData}
+                        margin={{ top: 8, right: 10, left: -10, bottom: 25 }}
+                      >
+                        &lt;CartesianGrid
+                          strokeDasharray="3 3"
+                          stroke="#cbd5e1"
+                          vertical={false}
+                        />
+                        &lt;XAxis
+                          dataKey="name"
+                          stroke="#64748b"
+                          fontSize={9}
+                          interval={0}
+                          angle={-15}
+                          textAnchor="end"
+                        />
+                        &lt;YAxis
+                          stroke="#64748b"
+                          fontSize={9}
+                          tickFormatter={(v) =>
+                            v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v
+                          }
+                        />
+                        &lt;Bar
+                          dataKey="value"
+                          fill={currentTheme.chartColor}
+                          radius={[3, 3, 0, 0]}
+                        />
+                      &lt;/BarChart>
+                    &lt;/ResponsiveContainer>
+                  &lt;/div>
+                &lt;/div>
+              )}
+
+              {/* Tabla de Contenido del PDF */}
+              &lt;div>
+                &lt;h3
+                  style={{ color: "#475569" }}
+                  className="text-xs font-bold uppercase tracking-wider mb-2"
+                >
+                  Detalle de Registros
+                &lt;/h3>
+                &lt;div className="overflow-x-auto rounded-lg border border-slate-200">
+                  &lt;table className="w-full text-left text-xs border-collapse">
+                    &lt;thead style={{ backgroundColor: currentTheme.primaryBg, color: "#ffffff" }}>
+                      &lt;tr
+                        style={{ backgroundColor: currentTheme.primaryBg, color: "#ffffff" }}
+                        className={`${currentTheme.primary} text-white`}
+                      >
+                        &lt;th
+                          style={{
+                            backgroundColor: currentTheme.primaryBg,
+                            color: "#ffffff",
+                            borderColor: currentTheme.primaryBg,
+                          }}
+                          className="p-2 border font-semibold text-center w-12"
+                        >
+                          #
+                        &lt;/th>
+                        {columns.map((col) => (
+                          &lt;th
+                            key={col}
+                            style={{
+                              backgroundColor: currentTheme.primaryBg,
+                              color: "#ffffff",
+                              borderColor: currentTheme.primaryBg,
+                            }}
+                            className="p-2 border font-semibold"
+                          >
+                            {col}
+                          &lt;/th>
+                        ))}
+                      &lt;/tr>
+                    &lt;/thead>
+                    &lt;tbody>
+                      {currentData.length > 0 ? (
+                        currentData.slice(0, maxRowsPrint).map((row, idx) => (
+                          &lt;tr
+                            key={idx}
+                            style={{
+                              backgroundColor: idx % 2 === 0 ? "#ffffff" : "#f1f5f9",
+                            }}
+                            className={idx % 2 === 0 ? "bg-white" : "bg-slate-50"}
+                          >
+                            &lt;td
+                              style={{ borderColor: "#cbd5e1", color: "#64748b" }}
+                              className="p-2 border font-mono text-center"
+                            >
+                              {idx + 1}
+                            &lt;/td>
+                            {columns.map((col) => (
+                              &lt;td
+                                key={col}
+                                style={{ borderColor: "#cbd5e1", color: "#1e293b" }}
+                                className="p-2 border font-medium"
+                              >
+                                {row[col] !== undefined &amp;&amp; row[col] !== null
+                                  ? String(row[col])
+                                  : "-"}
+                              &lt;/td>
+                            ))}
+                          &lt;/tr>
+                        ))
+                      ) : (
+                        &lt;tr>
+                          &lt;td
+                            colSpan={columns.length + 1}
+                            className="p-4 text-center text-slate-400"
+                          >
+                            No hay registros que coincidan con los filtros aplicados.
+                          &lt;/td>
+                        &lt;/tr>
+                      )}
+                    &lt;/tbody>
+                  &lt;/table>
+                &lt;/div>
+              &lt;/div>
+
+              {/* Pie de Página del PDF */}
+              &lt;div
+                style={{ borderTopColor: "#e2e8f0" }}
+                className="border-t pt-4 flex justify-between items-center text-[10px] text-slate-400"
+              >
+                &lt;span>
+                  Excel-to-PDF Smart Converter — Documento de ejecución local sin conexión
+                &lt;/span>
+                &lt;span>Página 1&lt;/span>
+              &lt;/div>
+            &lt;/div>
+          &lt;/div>
+        &lt;/div>
+      )}
+    &lt;/div>
+  );
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#COLOR_PALETTES">COLOR_PALETTES</a></li><li><a href="global.html#DataContext">DataContext</a></li><li><a href="global.html#DataProvider">DataProvider</a></li><li><a href="global.html#MainContent">MainContent</a></li><li><a href="global.html#ThemeContext">ThemeContext</a></li><li><a href="global.html#ThemeProvider">ThemeProvider</a></li><li><a href="global.html#applyThemeToDOM">applyThemeToDOM</a></li><li><a href="global.html#useData">useData</a></li><li><a href="global.html#useTheme">useTheme</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Tue Nov 03 2026 12:08:18 GMT-0300 (Argentina Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

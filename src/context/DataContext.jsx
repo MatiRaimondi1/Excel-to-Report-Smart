@@ -1,9 +1,91 @@
+/**
+ * @file DataContext.jsx
+ * @description Contexto global principal para la gestión de datos tabulares procedentes de archivos
+ * Excel (.xlsx/.xls), operaciones de filtrado, ordenamiento sincronizado y persistencia del historial
+ * de reportes generados en `localStorage`.
+ */
+
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useState, useContext, useMemo } from "react";
 import * as XLSX from "xlsx";
 
+/**
+ * @typedef {Object.<string, any>} DataRow
+ * Representa una fila individual de datos tabulares, donde las claves corresponden a los
+ * encabezados de las columnas del archivo Excel y los valores son su contenido tipado o serializado.
+ */
+
+/**
+ * @typedef {Object} SortConfig
+ * Configuración de ordenamiento de columnas.
+ * @property {string|null} key - Nombre de la columna sobre la cual se aplica el ordenamiento.
+ * @property {"asc" | "desc"} direction - Dirección del ordenamiento ("asc" ascendente, "desc" descendente).
+ */
+
+/**
+ * @typedef {Object} ReportMetadata
+ * Metadatos para la creación y almacenamiento de un reporte generado.
+ * @property {string} [title] - Título descriptivo del reporte.
+ * @property {string} [theme] - Tema cromático asignado ("indigo", "emerald", "slate").
+ * @property {number} [rowCount] - Número de filas contenidas en el reporte.
+ * @property {number} [colCount] - Número de columnas del reporte.
+ * @property {string[]} [columns] - Listado de encabezados de columnas.
+ * @property {DataRow[]} [data] - Conjunto de registros de datos capturados.
+ * @property {boolean} [showKPIs] - Indica si el reporte incluye sección de KPIs resumidos.
+ * @property {boolean} [showChart] - Indica si el reporte incluye gráfico estadístico.
+ * @property {Array<{name: string, value: number}>} [chartData] - Datos procesados para el gráfico.
+ * @property {string} [metricCol] - Columna numérica utilizada como métrica en el gráfico.
+ * @property {string} [categoryCol] - Columna cualitativa/categoría utilizada en el eje X del gráfico.
+ * @property {string} [date] - Fecha legible de creación del reporte.
+ */
+
+/**
+ * @typedef {ReportMetadata & { id: number, timestamp: string, fileName: string }} ReportHistoryItem
+ * Elemento archivado en el historial de reportes persistido en `localStorage`.
+ */
+
+/**
+ * @typedef {Object} DataContextValue
+ * Valores y métodos expuestos por el `DataContext`.
+ * @property {DataRow[]|null} rawData - Datos originales leídos directamente desde el archivo Excel sin modificaciones.
+ * @property {DataRow[]|null} processedData - Datos que han pasado por procesos de limpieza o normalización en DataQuality.
+ * @property {React.Dispatch<React.SetStateAction<DataRow[]|null>>} setProcessedData - Actualizador del conjunto de datos procesados.
+ * @property {DataRow[]|null} filteredData - Datos filtrados y ordenados sincronizados globalmente (null si no hay filtro activo).
+ * @property {string} searchTerm - Término de búsqueda textual global actual.
+ * @property {React.Dispatch<React.SetStateAction<string>>} setSearchTerm - Actualizador del término de búsqueda global.
+ * @property {string} selectedColumnFilter - Nombre de la columna seleccionada para filtro individual.
+ * @property {React.Dispatch<React.SetStateAction<string>>} setSelectedColumnFilter - Actualizador de la columna para filtro.
+ * @property {string} columnFilterValue - Valor textual a buscar dentro de la columna seleccionada.
+ * @property {React.Dispatch<React.SetStateAction<string>>} setColumnFilterValue - Actualizador del valor de filtro de columna.
+ * @property {SortConfig} sortConfig - Configuración actual de ordenamiento (columna y dirección).
+ * @property {React.Dispatch<React.SetStateAction<SortConfig>>} setSortConfig - Actualizador de la configuración de ordenamiento.
+ * @property {() => void} resetFilters - Restablece todos los filtros de búsqueda y ordenamiento a sus valores iniciales.
+ * @property {string} fileName - Nombre del archivo Excel cargado actualmente.
+ * @property {string[]} columns - Lista de nombres de las columnas detectadas en la primera fila.
+ * @property {boolean} isLoading - Indica si se está ejecutando la lectura o procesamiento asíncrono del archivo.
+ * @property {string|null} error - Mensaje de error descriptivo en caso de fallo al procesar el archivo.
+ * @property {(file: File) => Promise<void>} processFile - Función para procesar y cargar un archivo Excel (.xlsx/.xls).
+ * @property {() => void} resetData - Limpia todos los datos cargados y restablece el estado para un nuevo archivo.
+ * @property {ReportHistoryItem[]} reportHistory - Lista cronológica de reportes guardados en el almacenamiento local.
+ * @property {(reportMetadata: ReportMetadata) => void} saveToHistory - Guarda un nuevo reporte en el historial persistente.
+ * @property {() => void} clearHistory - Elimina todos los reportes archivados del historial y de `localStorage`.
+ * @property {(id: number) => void} deleteHistoryItem - Elimina un reporte específico del historial por su ID numérico.
+ */
+
+/**
+ * Contexto de React para compartir los datos tabulares, estado de filtros e historial entre componentes.
+ * @type {React.Context<DataContextValue | undefined>}
+ */
 export const DataContext = createContext();
 
+/**
+ * Hook de conveniencia para acceder a los datos y operaciones del contexto de datos.
+ *
+ * @throws {Error} Lanza un error si se invoca fuera de la jerarquía de un `DataProvider`.
+ * @returns {DataContextValue} Objeto con las propiedades y utilidades del contexto.
+ * @example
+ * const { rawData, filteredData, processFile } = useData();
+ */
 export const useData = () => {
   const context = useContext(DataContext);
   if (!context) {
@@ -12,6 +94,16 @@ export const useData = () => {
   return context;
 };
 
+/**
+ * Proveedor de contexto global de datos para la aplicación.
+ * Administra el ciclo de vida del archivo Excel cargado, el cálculo reactivo de filtros y ordenamiento,
+ * y la persistencia del historial de reportes.
+ *
+ * @component
+ * @param {Object} props - Propiedades del componente.
+ * @param {React.ReactNode} props.children - Elementos secundarios que recibirán el contexto.
+ * @returns {JSX.Element} Componente proveedor `DataContext.Provider`.
+ */
 export function DataProvider({ children }) {
   const [rawData, setRawData] = useState(null);
   const [processedData, setProcessedData] = useState(null);
@@ -26,6 +118,9 @@ export function DataProvider({ children }) {
   const [columnFilterValue, setColumnFilterValue] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
 
+  /**
+   * Restablece todos los parámetros de filtrado y ordenamiento al estado por defecto.
+   */
   const resetFilters = () => {
     setSearchTerm("");
     setSelectedColumnFilter("");
@@ -33,7 +128,13 @@ export function DataProvider({ children }) {
     setSortConfig({ key: null, direction: "asc" });
   };
 
-  // Datos filtrados y ordenados sincronizados globalmente
+  /**
+   * Conjunto de datos filtrados y ordenados sincronizados globalmente.
+   * Se evalúa de manera memorizada cuando cambian `processedData`, los filtros o la configuración de orden.
+   * Devuelve `null` si no hay ningún criterio de filtrado u orden activo para optimizar el consumo de memoria.
+   *
+   * @type {DataRow[]|null}
+   */
   const filteredData = useMemo(() => {
     if (!processedData) return null;
 
@@ -85,6 +186,9 @@ export function DataProvider({ children }) {
     return result;
   }, [processedData, searchTerm, selectedColumnFilter, columnFilterValue, sortConfig]);
 
+  /**
+   * Estado del historial de reportes con inicialización perezosa (lazy) desde `localStorage`.
+   */
   const [reportHistory, setReportHistory] = useState(() => {
     try {
       const savedHistory = localStorage.getItem("pdf_converter_history");
@@ -95,6 +199,12 @@ export function DataProvider({ children }) {
     }
   });
 
+  /**
+   * Agrega un nuevo reporte al historial y lo persiste en `localStorage`.
+   * Incluye degradación elegante a versión compacta (primeras 50 filas) en caso de superar la cuota del navegador.
+   *
+   * @param {ReportMetadata} reportMetadata - Información y contenido del reporte a almacenar.
+   */
   const saveToHistory = (reportMetadata) => {
     const newEntry = {
       id: Date.now(),
@@ -134,11 +244,19 @@ export function DataProvider({ children }) {
     });
   };
 
+  /**
+   * Borra la totalidad de los reportes archivados tanto en memoria como en `localStorage`.
+   */
   const clearHistory = () => {
     setReportHistory([]);
     localStorage.removeItem("pdf_converter_history");
   };
 
+  /**
+   * Elimina un ítem específico del historial por su identificador único.
+   *
+   * @param {number} id - Identificador numérico (timestamp) del reporte a remover.
+   */
   const deleteHistoryItem = (id) => {
     setReportHistory((prev) => {
       const updated = prev.filter((item) => item.id !== id);
@@ -151,6 +269,15 @@ export function DataProvider({ children }) {
     });
   };
 
+  /**
+   * Procesa un archivo Excel cargado mediante el input o por arrastrar y soltar.
+   * Valida su extensión, lee su contenido binario con `FileReader` y la librería `xlsx`,
+   * extrae las columnas y almacena los datos en formato JSON tabular.
+   *
+   * @async
+   * @param {File} file - Archivo obtenido del evento del navegador.
+   * @returns {Promise<void>}
+   */
   const processFile = async (file) => {
     if (!file) return;
 
@@ -213,6 +340,10 @@ export function DataProvider({ children }) {
     }
   };
 
+  /**
+   * Reinicia completamente el estado de los datos tabulares, columnas y filtros cargados,
+   * permitiendo que el usuario seleccione otro archivo Excel desde cero.
+   */
   const resetData = () => {
     setRawData(null);
     setProcessedData(null);

@@ -1,3 +1,10 @@
+/**
+ * @file DataQuality.jsx
+ * @description Componente para diagnóstico y saneamiento de la calidad de datos tabulares.
+ * Evalúa automáticamente la presencia de registros duplicados y celdas nulas o vacías,
+ * computa un puntaje de salud porcentual y ofrece acciones inmediatas de limpieza y normalización.
+ */
+
 import { useMemo, useState } from "react";
 import { useData } from "../context/DataContext";
 import {
@@ -11,11 +18,30 @@ import {
   ChevronUp,
 } from "lucide-react";
 
+/**
+ * @typedef {Object} QualityStats
+ * Métricas calculadas para la evaluación de calidad del dataset.
+ * @property {number} totalRows - Número total de filas presentes en el conjunto procesado.
+ * @property {number} duplicateRows - Cantidad de filas duplicadas detectadas por coincidencia completa.
+ * @property {number} nullCells - Cantidad de celdas vacías, nulas o compuestas sólo por espacios en blanco.
+ * @property {number} cleanScore - Porcentaje global de salud e integridad del conjunto de datos (0 a 100).
+ */
+
+/**
+ * Componente que despliega el panel de control de calidad y herramientas de saneamiento de datos.
+ *
+ * @component
+ * @returns {JSX.Element|null} Panel interactivo de auditoría y limpieza de datos o `null` si no hay registros.
+ */
 export default function DataQuality() {
   const { rawData, processedData, setProcessedData, columns } = useData();
   const [isOpen, setIsOpen] = useState(true);
 
-  // 1. Análisis de Calidad de Datos
+  /**
+   * Cálculo memorizado de estadísticas de diagnóstico y puntaje de salud de los datos.
+   *
+   * @type {QualityStats}
+   */
   const qualityStats = useMemo(() => {
     if (!processedData || processedData.length === 0) {
       return { totalRows: 0, duplicateRows: 0, nullCells: 0, cleanScore: 100 };
@@ -60,7 +86,9 @@ export default function DataQuality() {
     return { totalRows, duplicateRows, nullCells, cleanScore };
   }, [processedData, columns]);
 
-  // 2. Acciones de Limpieza
+  /**
+   * Elimina todas las filas duplicadas conservando únicamente la primera aparición de cada registro único.
+   */
   const handleRemoveDuplicates = () => {
     const uniqueMap = new Map();
     processedData.forEach((row) => {
@@ -72,6 +100,10 @@ export default function DataQuality() {
     setProcessedData(Array.from(uniqueMap.values()));
   };
 
+  /**
+   * Recorre todas las filas y columnas recortando los espacios en blanco sobrantes
+   * en los extremos de cualquier campo de texto.
+   */
   const handleTrimWhitespace = () => {
     const cleaned = processedData.map((row) => {
       const newRow = { ...row };
@@ -85,6 +117,9 @@ export default function DataQuality() {
     setProcessedData(cleaned);
   };
 
+  /**
+   * Sustituye cualquier valor nulo, indefinido o vacío por el texto representativo `"N/A"`.
+   */
   const handleFillNulls = () => {
     const filled = processedData.map((row) => {
       const newRow = { ...row };
@@ -99,6 +134,9 @@ export default function DataQuality() {
     setProcessedData(filled);
   };
 
+  /**
+   * Restaura `processedData` al conjunto de datos original `rawData` descartando modificaciones previas.
+   */
   const handleResetToRaw = () => {
     setProcessedData(rawData);
   };

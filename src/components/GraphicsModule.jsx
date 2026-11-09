@@ -1,3 +1,12 @@
+/**
+ * @file GraphicsModule.jsx
+ * @description Módulo de visualización gráfica interactiva construido sobre Recharts.
+ * Soporta 7 tipologías de gráficos (barras verticales, barras horizontales, líneas, áreas, pastel,
+ * dona y compuesto), 5 tipos de agregación métrica (suma, promedio, conteo, máximo y mínimo),
+ * múltiples paletas cromáticas accesibles, sincronización en tiempo real con los filtros globales
+ * y exportación del SVG vectorial a imagen PNG en alta definición (resolución 2x).
+ */
+
 import { useState, useMemo, useRef } from "react";
 import { useData } from "../context/DataContext";
 import { useTheme } from "../context/ThemeContext";
@@ -34,7 +43,19 @@ import {
   Legend,
 } from "recharts";
 
-// Paletas de colores predefinidas
+/**
+ * @typedef {Object} ColorPaletteItem
+ * Esquema de color predeterminado para las series y segmentos del gráfico.
+ * @property {string} name - Nombre descriptivo legible de la paleta.
+ * @property {string} primary - Color primario en formato hexadecimal.
+ * @property {string} secondary - Color secundario en formato hexadecimal.
+ * @property {string[]} colors - Colección secuencial de tonalidades hexadecimales.
+ */
+
+/**
+ * Paletas de colores predefinidas para la renderización de gráficos.
+ * @type {Record<string, ColorPaletteItem>}
+ */
 const COLOR_PALETTES = {
   emerald: {
     name: "Esmeralda",
@@ -79,6 +100,25 @@ const COLOR_PALETTES = {
   },
 };
 
+/**
+ * @typedef {Object} ChartSummaryStats
+ * Resumen estadístico del conjunto de categorías visibles en el gráfico.
+ * @property {number} total - Suma total de los valores agregados.
+ * @property {number} avg - Media aritmética calculada sobre las categorías graficadas.
+ * @property {string} topCategory - Nombre de la categoría con valor más alto.
+ * @property {number} topValue - Valor numérico de la categoría líder.
+ * @property {string} [topPercent] - Porcentaje de aporte de la categoría líder respecto al total.
+ * @property {number} count - Número total de elementos mostrados.
+ */
+
+/**
+ * Componente que provee un estudio interactivo de gráficos con Recharts.
+ * Permite alternar tipos de visualización, agrupar por cualquier columna, calcular agregaciones
+ * estadísticas, personalizar temas cromáticos y descargar el gráfico resultante en formato PNG.
+ *
+ * @component
+ * @returns {JSX.Element|null} Panel interactivo de gráficos o `null` si no hay datos disponibles.
+ */
 export default function GraphicsModule() {
   const { processedData, filteredData, sortConfig, columns, fileName } = useData();
   const { isDark } = useTheme();
@@ -142,7 +182,11 @@ export default function GraphicsModule() {
   const [showGrid, setShowGrid] = useState(true);
   const [showLegend, setShowLegend] = useState(true);
 
-  // Cálculo y agregación de datos para Recharts
+  /**
+   * Cálculo memorizado y agregación de métricas para la renderización del gráfico en Recharts.
+   * Aplica conteos, sumas, promedios, valores mínimos o máximos, y sincroniza el orden
+   * si existe un criterio activo proveniente de DataExplorer.
+   */
   const aggregatedData = useMemo(() => {
     if (!currentData || currentData.length === 0 || !categoryCol) return [];
 
@@ -262,7 +306,11 @@ export default function GraphicsModule() {
     limit,
   ]);
 
-  // Resumen estadístico del gráfico activo
+  /**
+   * Resumen estadístico dinámico de las categorías y valores presentes en el gráfico activo.
+   *
+   * @type {ChartSummaryStats}
+   */
   const chartSummary = useMemo(() => {
     if (aggregatedData.length === 0) {
       return { total: 0, avg: 0, topCategory: "N/A", topValue: 0, count: 0 };
@@ -288,7 +336,14 @@ export default function GraphicsModule() {
   // Colores activos
   const activePalette = COLOR_PALETTES[selectedPalette] || COLOR_PALETTES.emerald;
 
-  // Exportar el SVG real de Recharts como PNG, conservando estilos y dimensiones.
+  /**
+   * Exporta el elemento SVG del gráfico visible a una imagen PNG en alta definición (2x).
+   * Clona el nodo vectorial, computa e inyecta los estilos CSS en línea, renderiza el gráfico
+   * en un elemento `<canvas>` y desencadena la descarga del archivo en el navegador.
+   *
+   * @async
+   * @returns {Promise<void>}
+   */
   const handleDownloadChart = async () => {
     const container = chartContainerRef.current;
     if (!container || isExporting) return;

@@ -1,3 +1,10 @@
+/**
+ * @file PdfReport.jsx
+ * @description Componente para diseño, previsualización interactiva y generación de reportes ejecutivos en PDF.
+ * Aplica estilos especializados para medios de impresión (`@media print`), personalización temática corporativa
+ * (índigo, esmeralda y pizarra), inclusión selectiva de KPIs y gráficos, y persistencia automática en el historial.
+ */
+
 import { useState, useRef, useMemo } from "react";
 import { useData } from "../context/DataContext";
 import {
@@ -19,6 +26,13 @@ import {
   CartesianGrid,
 } from "recharts";
 
+/**
+ * Componente que permite personalizar la plantilla de un reporte ejecutivo, previsualizarlo
+ * en pantalla y exportarlo a formato PDF mediante el motor de impresión del navegador.
+ *
+ * @component
+ * @returns {JSX.Element|null} Panel de configuración y previsualización de reporte o `null` si no hay datos.
+ */
 export default function PdfReport() {
   const {
     processedData,
@@ -99,6 +113,10 @@ export default function PdfReport() {
   const totalCols = columns.length;
   const isFiltered = filteredData !== null && filteredData !== undefined;
 
+  /**
+   * Registra el reporte y su instantánea actual en el historial de `localStorage`
+   * y abre el cuadro de diálogo de impresión/guardado en PDF del navegador.
+   */
   const handlePrint = () => {
     // Guardar metadata y snapshot de datos en el historial local
     saveToHistory({
@@ -120,6 +138,9 @@ export default function PdfReport() {
     window.print();
   };
 
+  /**
+   * Definiciones de estilos y paletas cromáticas disponibles para el diseño del reporte en PDF.
+   */
   const themeColors = {
     indigo: {
       primary: "bg-indigo-600",

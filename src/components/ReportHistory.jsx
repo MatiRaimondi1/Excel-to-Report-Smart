@@ -1,3 +1,10 @@
+/**
+ * @file ReportHistory.jsx
+ * @description Componente para consulta, administración y reimpresión de reportes históricos.
+ * Muestra las instancias generadas con persistencia en `localStorage`, permitiendo visualizar
+ * una vista previa modal completa, regenerar el archivo PDF o eliminar elementos del archivo.
+ */
+
 import { useState, useMemo } from "react";
 import { flushSync } from "react-dom";
 import { useData } from "../context/DataContext";
@@ -22,6 +29,14 @@ import {
   CartesianGrid,
 } from "recharts";
 
+/**
+ * Componente que despliega la bitácora o historial de reportes creados previamente.
+ * Ofrece funcionalidades para previsualizar los datos capturados, re-descargar el PDF
+ * correspondiente o limpiar el registro local.
+ *
+ * @component
+ * @returns {JSX.Element} Lista de reportes generados con acciones de gestión.
+ */
 export default function ReportHistory() {
   const { reportHistory, clearHistory, deleteHistoryItem, columns, processedData } =
     useData();
@@ -68,6 +83,12 @@ export default function ReportHistory() {
     },
   };
 
+  /**
+   * Fuerza la actualización síncrona del ítem seleccionado mediante `flushSync`
+   * y desencadena la impresión o guardado en PDF de dicho reporte histórico.
+   *
+   * @param {import("../context/DataContext").ReportHistoryItem} item - Reporte histórico a exportar.
+   */
   const handleDownloadPdf = (item) => {
     flushSync(() => {
       setPrintItem(item);

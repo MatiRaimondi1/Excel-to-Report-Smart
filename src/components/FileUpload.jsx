@@ -1,3 +1,10 @@
+/**
+ * @file FileUpload.jsx
+ * @description Componente para la carga interactiva de archivos Excel (.xlsx/.xls).
+ * Permite la selección mediante explorador de archivos o arrastrar y soltar (drag & drop),
+ * con retroalimentación visual de estado de carga, accesibilidad por teclado y control de errores.
+ */
+
 import { useRef, useState } from "react";
 import { useData } from "../context/DataContext";
 import {
@@ -9,12 +16,26 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
+/**
+ * Componente de carga de hojas de cálculo Excel.
+ * Proporciona un área interactiva accesible donde el usuario puede arrastrar archivos
+ * o hacer clic para abrir el diálogo del sistema operativo.
+ *
+ * @component
+ * @returns {JSX.Element} Panel interactivo de carga con soporte de Drag & Drop y estados de progreso.
+ */
 export default function FileUpload() {
   const { processFile, isLoading, error } = useData();
 
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
 
+  /**
+   * Maneja el evento de arrastrar un archivo sobre la zona de carga.
+   * Evita el comportamiento predeterminado del navegador y activa la indicación visual de arrastre.
+   *
+   * @param {React.DragEvent<HTMLDivElement>} e - Evento de arrastre de React.
+   */
   const handleDragOver = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -24,6 +45,11 @@ export default function FileUpload() {
     }
   };
 
+  /**
+   * Maneja la salida del puntero con archivo arrastrado fuera de la zona de carga.
+   *
+   * @param {React.DragEvent<HTMLDivElement>} e - Evento de arrastre de React.
+   */
   const handleDragLeave = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -31,6 +57,12 @@ export default function FileUpload() {
     setIsDragging(false);
   };
 
+  /**
+   * Maneja la acción de soltar el archivo en la zona designada.
+   * Extrae el primer archivo disponible y lo envía a procesar mediante `processFile`.
+   *
+   * @param {React.DragEvent<HTMLDivElement>} e - Evento de soltar de React.
+   */
   const handleDrop = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -46,6 +78,11 @@ export default function FileUpload() {
     }
   };
 
+  /**
+   * Maneja la selección de archivos a través del `<input type="file" />` nativo.
+   *
+   * @param {React.ChangeEvent<HTMLInputElement>} e - Evento de cambio del elemento input.
+   */
   const handleFileChange = (e) => {
     const files = e.target.files;
 
@@ -54,6 +91,12 @@ export default function FileUpload() {
     }
   };
 
+  /**
+   * Permite activar el selector de archivo mediante el teclado (teclas Enter o Espacio)
+   * garantizando el cumplimiento de pautas de accesibilidad web (WCAG / a11y).
+   *
+   * @param {React.KeyboardEvent<HTMLDivElement>} e - Evento de teclado de React.
+   */
   const handleKeyDown = (e) => {
     if ((e.key === "Enter" || e.key === " ") && !isLoading) {
       e.preventDefault();
