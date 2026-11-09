@@ -37,7 +37,7 @@
 
 ```bash
 # Clonar el repositorio
-git clone https://github.com/tu-usuario/Excel-to-Report-Smart.git
+git clone https://github.com/MatiRaimondi1/Excel-to-Report-Smart.git
 cd Excel-to-Report-Smart
 
 # Instalar dependencias
@@ -120,7 +120,8 @@ Excel-to-Report-Smart/
 │   └── pages/
 │       └── App.test.jsx
 ├── docs/                       # Documentación
-│   └── use-case-diagram.puml   # Diagrama UML de casos de uso
+|   ├── JSDoc                          # Documentación técnica
+│   └── Diagrama de casos de uso.svg   # Diagrama UML de casos de uso
 ├── package.json
 ├── vite.config.js
 ├── eslint.config.js
@@ -231,12 +232,6 @@ La configuración de Vite se encuentra en [`vite.config.js`](./vite.config.js):
 ### ESLint
 
 Configuración en [`eslint.config.js`](./eslint.config.js) con reglas para React Hooks y React Refresh.
-
----
-
-## 📖 Documentación
-
-- **Diagrama de Casos de Uso (PlantUML):** [`docs/Diagrama de casos de uso.svg`](./docs/Diagrama de casos de uso.svg) — 50+ casos de uso en 8 módulos funcionales
 
 ---
 
